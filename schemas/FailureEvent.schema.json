@@ -1,0 +1,134 @@
+{
+  "$defs": {
+    "SensorRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "machine_id": {
+          "minLength": 1,
+          "title": "Machine Id",
+          "type": "string"
+        },
+        "provenance": {
+          "default": "asteria",
+          "minLength": 1,
+          "title": "Provenance",
+          "type": "string"
+        },
+        "quality": {
+          "default": "good",
+          "enum": [
+            "good",
+            "uncertain",
+            "bad"
+          ],
+          "title": "Quality",
+          "type": "string"
+        },
+        "schema_version": {
+          "default": "1.0.0",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "sensor_id": {
+          "minLength": 1,
+          "title": "Sensor Id",
+          "type": "string"
+        },
+        "timestamp": {
+          "format": "date-time",
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "units": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "minProperties": 1,
+          "title": "Units",
+          "type": "object"
+        },
+        "values": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "minProperties": 1,
+          "title": "Values",
+          "type": "object"
+        }
+      },
+      "required": [
+        "sensor_id",
+        "machine_id",
+        "timestamp",
+        "values",
+        "units"
+      ],
+      "title": "SensorRecord",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "downtime_minutes": {
+      "minimum": 0,
+      "title": "Downtime Minutes",
+      "type": "number"
+    },
+    "failure_id": {
+      "minLength": 1,
+      "title": "Failure Id",
+      "type": "string"
+    },
+    "failure_mode": {
+      "minLength": 1,
+      "title": "Failure Mode",
+      "type": "string"
+    },
+    "machine_id": {
+      "minLength": 1,
+      "title": "Machine Id",
+      "type": "string"
+    },
+    "occurred_at": {
+      "format": "date-time",
+      "title": "Occurred At",
+      "type": "string"
+    },
+    "provenance": {
+      "default": "asteria",
+      "minLength": 1,
+      "title": "Provenance",
+      "type": "string"
+    },
+    "schema_version": {
+      "default": "1.0.0",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "sensor_context": {
+      "items": {
+        "$ref": "#/$defs/SensorRecord"
+      },
+      "title": "Sensor Context",
+      "type": "array"
+    },
+    "severity": {
+      "maximum": 5,
+      "minimum": 1,
+      "title": "Severity",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "failure_id",
+    "machine_id",
+    "occurred_at",
+    "failure_mode",
+    "severity",
+    "downtime_minutes"
+  ],
+  "title": "FailureEvent",
+  "type": "object"
+}

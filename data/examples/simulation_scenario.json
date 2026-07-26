@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.0.0",
+  "provenance": "synthetic-engineering-assumptions",
+  "scenario_id": "baseline-week-01",
+  "name": "Fast baseline with two composite panel families",
+  "factory_id": "asteria-demo",
+  "start_at": "2026-09-07T06:00:00+02:00",
+  "end_at": "2026-09-11T22:00:00+02:00",
+  "random_seed": 42,
+  "fidelity": "fast",
+  "max_reworks": 1,
+  "interarrival_time": 1.5,
+  "products": [
+    {
+      "product_id": "panel-a",
+      "name": "Structural Panel A",
+      "unit": "panel",
+      "routing": [
+        "preparation",
+        "cutting",
+        "layup",
+        "intermediate-buffer",
+        "autoclave",
+        "finishing",
+        "qc"
+      ],
+      "cycle_time_minutes": {
+        "preparation": 8,
+        "cutting": 6,
+        "layup": 18,
+        "intermediate-buffer": 2,
+        "autoclave": 60,
+        "finishing": 10,
+        "qc": 7
+      },
+      "bill_of_materials": {
+        "carbon_fabric_m2": 2.4,
+        "resin_kg": 1.2
+      }
+    },
+    {
+      "product_id": "panel-b",
+      "name": "Sandwich Panel B",
+      "unit": "panel",
+      "routing": [
+        "preparation",
+        "cutting",
+        "layup",
+        "intermediate-buffer",
+        "autoclave",
+        "finishing",
+        "qc"
+      ],
+      "cycle_time_minutes": {
+        "preparation": 10,
+        "cutting": 7,
+        "layup": 22,
+        "intermediate-buffer": 2,
+        "autoclave": 72,
+        "finishing": 12,
+        "qc": 8
+      },
+      "bill_of_materials": {
+        "carbon_fabric_m2": 3.1,
+        "resin_kg": 1.5,
+        "core_m2": 1.0
+      }
+    }
+  ],
+  "orders": [
+    {
+      "order_id": "order-001",
+      "product_id": "panel-a",
+      "quantity": 6,
+      "quantity_unit": "panel",
+      "release_at": "2026-09-07T06:00:00+02:00",
+      "due_at": "2026-09-08T18:00:00+02:00",
+      "priority": 2
+    },
+    {
+      "order_id": "order-002",
+      "product_id": "panel-b",
+      "quantity": 4,
+      "quantity_unit": "panel",
+      "release_at": "2026-09-07T08:00:00+02:00",
+      "due_at": "2026-09-10T16:00:00+02:00",
+      "priority": 1
+    }
+  ]
+}

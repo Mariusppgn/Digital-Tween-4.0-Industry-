@@ -1,0 +1,83 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "budget": {
+      "minimum": 0,
+      "title": "Budget",
+      "type": "number"
+    },
+    "currency": {
+      "default": "EUR",
+      "maxLength": 3,
+      "minLength": 3,
+      "title": "Currency",
+      "type": "string"
+    },
+    "expected_value": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Expected Value",
+      "type": "number"
+    },
+    "name": {
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "project_id": {
+      "minLength": 1,
+      "title": "Project Id",
+      "type": "string"
+    },
+    "provenance": {
+      "default": "asteria",
+      "minLength": 1,
+      "title": "Provenance",
+      "type": "string"
+    },
+    "schema_version": {
+      "default": "1.0.0",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "stage": {
+      "enum": [
+        "idea",
+        "feasibility",
+        "prototype",
+        "pilot",
+        "industrialisation"
+      ],
+      "title": "Stage",
+      "type": "string"
+    },
+    "start_at": {
+      "format": "date-time",
+      "title": "Start At",
+      "type": "string"
+    },
+    "target_end_at": {
+      "format": "date-time",
+      "title": "Target End At",
+      "type": "string"
+    },
+    "technology_readiness_level": {
+      "maximum": 9,
+      "minimum": 1,
+      "title": "Technology Readiness Level",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "project_id",
+    "name",
+    "stage",
+    "budget",
+    "start_at",
+    "target_end_at",
+    "technology_readiness_level"
+  ],
+  "title": "RDProject",
+  "type": "object"
+}

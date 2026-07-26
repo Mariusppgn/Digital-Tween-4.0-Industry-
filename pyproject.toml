@@ -42,6 +42,7 @@ dev = [
   "pytest-cov>=5,<7",
   "reportlab>=4.2,<5",
   "ruff>=0.6,<1",
+  "types-networkx>=3.2,<4",
   "types-PyYAML>=6.0,<7",
 ]
 
@@ -62,7 +63,7 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
-ignore = ["E501"]
+ignore = ["E501", "RUF001"]
 
 [tool.ruff.format]
 quote-style = "double"

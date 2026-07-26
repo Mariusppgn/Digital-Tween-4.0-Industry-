@@ -1,0 +1,67 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "bill_of_materials": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "title": "Bill Of Materials",
+      "type": "object"
+    },
+    "cycle_time_minutes": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "title": "Cycle Time Minutes",
+      "type": "object"
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "title": "Metadata",
+      "type": "object"
+    },
+    "name": {
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "product_id": {
+      "minLength": 1,
+      "title": "Product Id",
+      "type": "string"
+    },
+    "provenance": {
+      "default": "asteria",
+      "minLength": 1,
+      "title": "Provenance",
+      "type": "string"
+    },
+    "routing": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Routing",
+      "type": "array"
+    },
+    "schema_version": {
+      "default": "1.0.0",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "unit": {
+      "default": "panel",
+      "minLength": 1,
+      "title": "Unit",
+      "type": "string"
+    }
+  },
+  "required": [
+    "product_id",
+    "name",
+    "routing"
+  ],
+  "title": "ProductDefinition",
+  "type": "object"
+}
