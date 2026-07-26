@@ -2,7 +2,7 @@
 
 > Un démonstrateur modulaire et reproductible de jumeau numérique industriel pour la fabrication de panneaux composites.
 
-[English version](README.md) · [Architecture](docs/architecture_FR.md) · [Roadmap](ROADMAP.md) · [Licence](LICENSE)
+[English](README.md) · [Français](README_FR.md) · [Architecture EN](docs/architecture.md) · [Architecture FR](docs/architecture_FR.md) · [Roadmap](ROADMAP.md) · [Licence](LICENSE)
 
 ## Résumé
 
@@ -107,8 +107,10 @@ tests/                    # Tests unitaires, invariants et bout en bout
 reports/                  # Rapports et figures générés
 ```
 
-Voir [la décision d’architecture](docs/architecture_FR.md) et
-[la documentation des contrats](docs/data_contracts_FR.md).
+Voir les décisions d’architecture
+([EN](docs/architecture.md), [FR](docs/architecture_FR.md)) et la documentation des contrats
+([EN](docs/data_contracts.md), [FR](docs/data_contracts_FR.md)). Le catalogue complet des modules est
+disponible en [anglais](docs/module_catalog.md) et en [français](docs/module_catalog_FR.md).
 
 ## Méthodes
 
@@ -126,8 +128,9 @@ Le dépôt ne contient que de petits fichiers synthétiques de configuration et 
 contrat comprend `schema_version` et des métadonnées de provenance. Les unités sont déclarées dans
 les noms de champs ou dans des champs d’unité validés. La distinction entre modèles issus de la
 littérature, approximations d’ingénierie et valeurs synthétiques est documentée dans la
-[méthodologie scientifique](docs/scientific_methodology_FR.md) et les
-[hypothèses industrielles](docs/industrial_assumptions_FR.md).
+méthodologie scientifique
+([EN](docs/scientific_methodology.md), [FR](docs/scientific_methodology_FR.md)) et les hypothèses
+industrielles ([EN](docs/industrial_assumptions.md), [FR](docs/industrial_assumptions_FR.md)).
 
 ## Installation
 
@@ -152,7 +155,7 @@ Utiliser `uv run asteria --help` pour consulter la référence des commandes.
 
 ## Exemples
 
-Exécuter deux fois la baseline avec la même graine et comparer `events.csv` et `kpi.json` : le modèle
+Exécuter deux fois la baseline avec la même graine et comparer `events.csv` et `kpis.json` : le modèle
 est conçu pour produire des résultats identiques. Modifier la graine du scénario ou le mix de
 commandes permet de créer une alternative contrôlée. Les exemples de configuration se trouvent dans
 [`configs/`](configs/) et les données lisibles dans [`data/examples/`](data/examples/).
@@ -163,6 +166,15 @@ La simulation exporte un journal d’événements, l’état final et un rapport
 livraison établit la chaîne d’exécution et de validation ; elle ne revendique aucune performance
 industrielle optimisée. Les résultats numériques dépendent de la configuration de base explicitement
 synthétique.
+
+| Élément mesuré | Résultat de la baseline |
+|---|---:|
+| Panneaux acceptés | `10` |
+| Temps de cycle moyen | `429.20 min` |
+| Taux de service | `1.00` |
+| Taux de défaut avec réinspection | `0.1667` |
+| Indicateur énergétique | `1168.69 kWh synthétiques` |
+| Durée du cœur de simulation | `0.002 s` |
 
 ## KPI
 
@@ -206,12 +218,12 @@ structure des README bilingues. GitHub Actions exécute les mêmes contrôles et
 
 | Profil | Usage prévu | Budget | Preuve actuelle |
 |---|---|---:|---|
-| `fast` | Tests et démonstration recruteur | `< 30 s` | Contrôlé par un benchmark smoke |
+| `fast` | Tests et démonstration recruteur | `< 30 s` | `5.45 s` mesurées de bout en bout ; `0.002 s` pour le cœur |
 | `standard` | Analyse principale de scénarios | `< 2 min` pour les réplications mensuelles | Benchmark prévu |
 | `research` | Expériences approfondies facultatives | `< 5 min` par configuration par défaut | Non implémenté |
 
-Ces performances sont des budgets et non des résultats revendiqués. Les temps mesurés sont enregistrés
-avec les expériences générées et remplaceront cette mention après un benchmark multiplateforme.
+La mesure `fast` a été réalisée sous Windows 11 avec Python 3.12 et inclut le démarrage de Matplotlib
+et trois exports PNG. Les valeurs standard et research restent des budgets avant benchmark multiplateforme.
 
 ## Limites
 
@@ -229,12 +241,11 @@ comparent les politiques de maintenance corrective, préventive et prédictive i
 
 ## Références scientifiques
 
-Le choix des méthodes et les futures références sont suivis dans la
-[méthodologie scientifique](docs/scientific_methodology_FR.md). Une référence ne sera ajoutée que
+Le choix des méthodes et les futures références sont suivis dans la méthodologie scientifique
+([EN](docs/scientific_methodology.md), [FR](docs/scientific_methodology_FR.md)). Une référence ne sera ajoutée que
 lorsqu’une loi, un estimateur ou un algorithme précis sera implémenté ; les paramètres synthétiques ne
 sont jamais présentés comme des valeurs issues de la littérature.
 
 ## Licence
 
 Distribué sous [licence MIT](LICENSE).
-

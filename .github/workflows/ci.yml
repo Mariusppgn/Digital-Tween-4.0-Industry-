@@ -15,10 +15,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
-          version: "0.8.0"
+          version: "0.11.32"
           enable-cache: true
       - name: Install Python and dependencies
-        run: uv sync --extra dev
+        run: |
+          uv python install 3.12
+          uv sync --frozen --extra dev
       - name: Lint
         run: uv run ruff check .
       - name: Type-check
@@ -27,4 +29,3 @@ jobs:
         run: uv run pytest
       - name: Fast smoke simulation
         run: uv run asteria simulate --config configs/scenarios/baseline.yaml --output outputs/ci
-

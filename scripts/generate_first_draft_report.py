@@ -25,7 +25,6 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-
 INK = colors.HexColor("#172033")
 NAVY = colors.HexColor("#17365D")
 TEAL = colors.HexColor("#17807A")
@@ -188,7 +187,9 @@ def build_report(summary_path: Path, output_path: Path) -> None:
     story: list[Any] = [
         Spacer(1, 17 * mm),
         Paragraph("ASTERIA COMPOSITES LAB", title),
-        Paragraph("Rapport d’architecture, d’implémentation et d’avancement — premier jet", subtitle),
+        Paragraph(
+            "Rapport d’architecture, d’implémentation et d’avancement — premier jet", subtitle
+        ),
         Table(
             [
                 [
@@ -448,4 +449,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

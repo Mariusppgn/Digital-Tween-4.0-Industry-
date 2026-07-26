@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -37,7 +36,12 @@ def _markdown_structure(path: Path) -> list[str]:
 
 def test_repository_readmes_have_identical_markdown_structure() -> None:
     """English and French README files must keep equivalent Markdown topology."""
-    assert _markdown_structure(ROOT / "README.md") == _markdown_structure(
-        ROOT / "README_FR.md"
-    )
+    assert _markdown_structure(ROOT / "README.md") == _markdown_structure(ROOT / "README_FR.md")
 
+
+def test_repository_readmes_keep_identical_technical_links() -> None:
+    """Translated README files must preserve link targets in the same order."""
+    target_pattern = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
+    english = target_pattern.findall((ROOT / "README.md").read_text(encoding="utf-8"))
+    french = target_pattern.findall((ROOT / "README_FR.md").read_text(encoding="utf-8"))
+    assert english == french

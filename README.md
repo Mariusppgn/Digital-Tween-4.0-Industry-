@@ -2,7 +2,7 @@
 
 > A modular, reproducible industrial digital-twin demonstrator for composite panel manufacturing.
 
-[Version française](README_FR.md) · [Architecture](docs/architecture.md) · [Roadmap](ROADMAP.md) · [License](LICENSE)
+[English](README.md) · [Français](README_FR.md) · [Architecture EN](docs/architecture.md) · [Architecture FR](docs/architecture_FR.md) · [Roadmap](ROADMAP.md) · [License](LICENSE)
 
 ## Summary
 
@@ -104,8 +104,10 @@ tests/                    # Unit, invariant and end-to-end tests
 reports/                  # Generated reports and figures
 ```
 
-See [the architecture decision record](docs/architecture.md) and
-[the data-contract documentation](docs/data_contracts.md).
+See the architecture decision records
+([EN](docs/architecture.md), [FR](docs/architecture_FR.md)) and the data-contract documentation
+([EN](docs/data_contracts.md), [FR](docs/data_contracts_FR.md)). The complete module catalogue is
+available in [English](docs/module_catalog.md) and [French](docs/module_catalog_FR.md).
 
 ## Methods
 
@@ -122,8 +124,9 @@ See [the architecture decision record](docs/architecture.md) and
 The repository contains only small synthetic configuration and example files. Every contract includes
 `schema_version` and provenance metadata. Units are declared in field names or validated unit fields.
 The distinction between literature-derived models, engineering approximations and synthetic values is
-documented in [scientific methodology](docs/scientific_methodology.md) and
-[industrial assumptions](docs/industrial_assumptions.md).
+documented in the scientific methodology
+([EN](docs/scientific_methodology.md), [FR](docs/scientific_methodology_FR.md)) and industrial
+assumptions ([EN](docs/industrial_assumptions.md), [FR](docs/industrial_assumptions_FR.md)).
 
 ## Installation
 
@@ -148,7 +151,7 @@ Use `uv run asteria --help` for the command reference.
 
 ## Examples
 
-Run the baseline twice with the same seed and compare `events.csv` and `kpi.json`: the model is
+Run the baseline twice with the same seed and compare `events.csv` and `kpis.json`: the model is
 designed to produce identical results. Change the scenario seed or order mix to create a controlled
 alternative. Configuration examples are in [`configs/`](configs/) and readable data examples are in
 [`data/examples/`](data/examples/).
@@ -158,6 +161,15 @@ alternative. Configuration examples are in [`configs/`](configs/) and readable d
 The simulation exports an event journal, final state and KPI report. This first delivery establishes
 the execution and validation pipeline; it does not claim optimized industrial performance. Numerical
 results depend on the explicitly synthetic baseline configuration.
+
+| Measured item | Baseline result |
+|---|---:|
+| Accepted panels | `10` |
+| Mean cycle time | `429.20 min` |
+| Service rate | `1.00` |
+| Defect rate including re-inspection | `0.1667` |
+| Energy indicator | `1168.69 synthetic kWh` |
+| Core simulation runtime | `0.002 s` |
 
 ## KPI
 
@@ -201,12 +213,12 @@ runs the same checks plus a `fast` smoke simulation.
 
 | Profile | Intended use | Budget | Current evidence |
 |---|---|---:|---|
-| `fast` | Tests and recruiter demonstration | `< 30 s` | Enforced by smoke benchmark |
+| `fast` | Tests and recruiter demonstration | `< 30 s` | `5.45 s` measured end to end; `0.002 s` simulation core |
 | `standard` | Main scenario analysis | `< 2 min` for monthly replications | Planned benchmark |
 | `research` | Optional deeper experiments | `< 5 min` per default configuration | Not implemented |
 
-Performance values are budgets, not claimed benchmark results. Measured runtimes are recorded with
-generated experiments and will replace this statement after multi-platform benchmarking.
+The `fast` measurement was made on Windows 11 with Python 3.12 and includes Matplotlib startup and
+three PNG exports. Standard and research values remain budgets until multi-platform benchmarking.
 
 ## Limitations
 
@@ -224,12 +236,11 @@ preventive and interpretable predictive-maintenance policies.
 
 ## Scientific references
 
-Method selection and future references are tracked in
-[scientific methodology](docs/scientific_methodology.md). References will be added only when a
+Method selection and future references are tracked in the scientific methodology
+([EN](docs/scientific_methodology.md), [FR](docs/scientific_methodology_FR.md)). References will be added only when a
 specific law, estimator or algorithm is implemented; synthetic parameters are never presented as
 literature values.
 
 ## License
 
 Released under the [MIT License](LICENSE).
-
