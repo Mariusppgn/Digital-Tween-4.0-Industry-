@@ -1,0 +1,67 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "machine_id": {
+      "minLength": 1,
+      "title": "Machine Id",
+      "type": "string"
+    },
+    "provenance": {
+      "default": "asteria",
+      "minLength": 1,
+      "title": "Provenance",
+      "type": "string"
+    },
+    "quality": {
+      "default": "good",
+      "enum": [
+        "good",
+        "uncertain",
+        "bad"
+      ],
+      "title": "Quality",
+      "type": "string"
+    },
+    "schema_version": {
+      "default": "1.0.0",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "sensor_id": {
+      "minLength": 1,
+      "title": "Sensor Id",
+      "type": "string"
+    },
+    "timestamp": {
+      "format": "date-time",
+      "title": "Timestamp",
+      "type": "string"
+    },
+    "units": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "minProperties": 1,
+      "title": "Units",
+      "type": "object"
+    },
+    "values": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "minProperties": 1,
+      "title": "Values",
+      "type": "object"
+    }
+  },
+  "required": [
+    "sensor_id",
+    "machine_id",
+    "timestamp",
+    "values",
+    "units"
+  ],
+  "title": "SensorRecord",
+  "type": "object"
+}

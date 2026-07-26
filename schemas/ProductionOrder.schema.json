@@ -1,0 +1,64 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "due_at": {
+      "format": "date-time",
+      "title": "Due At",
+      "type": "string"
+    },
+    "order_id": {
+      "minLength": 1,
+      "title": "Order Id",
+      "type": "string"
+    },
+    "priority": {
+      "default": 1,
+      "maximum": 10,
+      "minimum": 1,
+      "title": "Priority",
+      "type": "integer"
+    },
+    "product_id": {
+      "minLength": 1,
+      "title": "Product Id",
+      "type": "string"
+    },
+    "provenance": {
+      "default": "asteria",
+      "minLength": 1,
+      "title": "Provenance",
+      "type": "string"
+    },
+    "quantity": {
+      "exclusiveMinimum": 0,
+      "title": "Quantity",
+      "type": "integer"
+    },
+    "quantity_unit": {
+      "default": "panel",
+      "minLength": 1,
+      "title": "Quantity Unit",
+      "type": "string"
+    },
+    "release_at": {
+      "format": "date-time",
+      "title": "Release At",
+      "type": "string"
+    },
+    "schema_version": {
+      "default": "1.0.0",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "order_id",
+    "product_id",
+    "quantity",
+    "release_at",
+    "due_at"
+  ],
+  "title": "ProductionOrder",
+  "type": "object"
+}

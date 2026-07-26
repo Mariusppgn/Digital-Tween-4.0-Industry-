@@ -1,0 +1,83 @@
+{
+  "$defs": {
+    "MachineStatus": {
+      "enum": [
+        "idle",
+        "setup",
+        "running",
+        "blocked",
+        "failed",
+        "maintenance"
+      ],
+      "title": "MachineStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "active_order_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Active Order Id"
+    },
+    "machine_id": {
+      "minLength": 1,
+      "title": "Machine Id",
+      "type": "string"
+    },
+    "provenance": {
+      "default": "asteria",
+      "minLength": 1,
+      "title": "Provenance",
+      "type": "string"
+    },
+    "remaining_minutes": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Remaining Minutes"
+    },
+    "schema_version": {
+      "default": "1.0.0",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/MachineStatus"
+    },
+    "timestamp": {
+      "format": "date-time",
+      "title": "Timestamp",
+      "type": "string"
+    },
+    "utilisation": {
+      "default": 0,
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Utilisation",
+      "type": "number"
+    }
+  },
+  "required": [
+    "machine_id",
+    "timestamp",
+    "status"
+  ],
+  "title": "MachineState",
+  "type": "object"
+}

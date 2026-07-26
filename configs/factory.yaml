@@ -1,0 +1,170 @@
+schema_version: 1.0.0
+provenance: synthetic-engineering-assumptions
+factory_id: asteria-demo
+name: Asteria Composites Lab
+timezone: Europe/Paris
+
+machines:
+  - machine_id: prep-01
+    name: Shared kit preparation station
+    machine_type: preparation
+    capabilities: [kit_preparation]
+    capacity_per_hour: 7.5
+    capacity_unit: panels/hour
+    availability: 0.97
+    metadata:
+      processing_time: 8
+      duration_cv: 0.05
+      setup_time: 2
+      shared_resource: operator-team
+      shared_resource_capacity: 3
+      energy_kw: 1.5
+      cost_per_hour: 32
+
+  - machine_id: cutter-01
+    name: CNC fabric cutter
+    machine_type: cutting
+    capabilities: [cutting]
+    capacity_per_hour: 10
+    capacity_unit: panels/hour
+    availability: 0.96
+    metadata:
+      processing_time: 6
+      duration_cv: 0.06
+      setup_time: 3
+      shared_resource: operator-team
+      shared_resource_capacity: 3
+      energy_kw: 4
+      cost_per_hour: 45
+
+  - machine_id: layup-01
+    name: Lay-up station A
+    machine_type: layup
+    capabilities: [layup]
+    capacity_per_hour: 3.3
+    capacity_unit: panels/hour
+    availability: 0.94
+    metadata:
+      processing_time: 18
+      duration_cv: 0.08
+      setup_time: 5
+      shared_resource: operator-team
+      shared_resource_capacity: 3
+      buffer_capacity: 2
+      energy_kw: 1
+      cost_per_hour: 38
+
+  - machine_id: layup-02
+    name: Lay-up station B
+    machine_type: layup
+    capabilities: [layup]
+    capacity_per_hour: 3.3
+    capacity_unit: panels/hour
+    availability: 0.94
+    metadata:
+      processing_time: 18
+      duration_cv: 0.08
+      setup_time: 5
+      shared_resource: operator-team
+      shared_resource_capacity: 3
+      buffer_capacity: 2
+      energy_kw: 1
+      cost_per_hour: 38
+
+  - machine_id: autoclave-01
+    name: Shared autoclave
+    machine_type: autoclave
+    capabilities: [curing]
+    capacity_per_hour: 1
+    capacity_unit: batches/hour
+    availability: 0.91
+    mtbf_hours: 18
+    mttr_hours: 0.75
+    metadata:
+      processing_time: 60
+      duration_cv: 0.03
+      setup_time: 8
+      buffer_capacity: 2
+      failure_probability: 0.08
+      repair_time: 45
+      degradation_after: 5
+      degradation_factor: 1.12
+      maintenance_recovery: 0.6
+      energy_kw: 95
+      cost_per_hour: 150
+
+  - machine_id: finish-01
+    name: Trimming and finishing station
+    machine_type: finishing
+    capabilities: [trimming, finishing, rework]
+    capacity_per_hour: 6
+    capacity_unit: panels/hour
+    availability: 0.96
+    metadata:
+      processing_time: 10
+      duration_cv: 0.07
+      setup_time: 3
+      shared_resource: operator-team
+      shared_resource_capacity: 3
+      energy_kw: 8
+      cost_per_hour: 52
+
+  - machine_id: qc-01
+    name: Ultrasonic quality control
+    machine_type: quality_control
+    capabilities: [inspection]
+    capacity_per_hour: 8.5
+    capacity_unit: panels/hour
+    availability: 0.98
+    metadata:
+      processing_time: 7
+      duration_cv: 0.04
+      defect_rate: 0.08
+      load_defect_slope: 0.02
+      rework_to: finishing
+      energy_kw: 3
+      cost_per_hour: 58
+
+process_graph:
+  schema_version: 1.0.0
+  provenance: synthetic-process-engineering
+  nodes:
+    - {node_id: source, kind: source, name: Raw material store}
+    - {node_id: preparation, kind: operation, name: Kit preparation, machine_ids: [prep-01]}
+    - {node_id: cutting, kind: operation, name: Fabric cutting, machine_ids: [cutter-01]}
+    - {node_id: layup, kind: operation, name: Parallel lay-up, machine_ids: [layup-01, layup-02]}
+    - {node_id: intermediate-buffer, kind: buffer, name: Limited intermediate storage, capacity: 3, capacity_unit: panels}
+    - {node_id: autoclave, kind: operation, name: Autoclave curing, machine_ids: [autoclave-01]}
+    - {node_id: finishing, kind: operation, name: Trimming and finishing, machine_ids: [finish-01]}
+    - {node_id: qc, kind: quality_control, name: Quality control, machine_ids: [qc-01]}
+    - {node_id: rework, kind: rework, name: Bounded rework, machine_ids: [finish-01]}
+    - {node_id: sink, kind: sink, name: Finished-goods store}
+  edges:
+    - {source: source, target: preparation}
+    - {source: preparation, target: cutting}
+    - {source: cutting, target: layup}
+    - {source: layup, target: intermediate-buffer}
+    - {source: intermediate-buffer, target: autoclave}
+    - {source: autoclave, target: finishing}
+    - {source: finishing, target: qc}
+    - {source: qc, target: sink, condition: pass, probability: 0.92}
+    - {source: qc, target: rework, condition: fail, probability: 0.08}
+    - {source: rework, target: finishing}
+
+resource_calendars:
+  - resource_id: operator-team
+    timezone: Europe/Paris
+    weekly_shifts:
+      monday: ["06:00-14:00", "14:00-22:00"]
+      tuesday: ["06:00-14:00", "14:00-22:00"]
+      wednesday: ["06:00-14:00", "14:00-22:00"]
+      thursday: ["06:00-14:00", "14:00-22:00"]
+      friday: ["06:00-14:00", "14:00-22:00"]
+  - resource_id: maintenance-technician
+    timezone: Europe/Paris
+    weekly_shifts:
+      monday: ["07:00-15:00"]
+      tuesday: ["07:00-15:00"]
+      wednesday: ["07:00-15:00"]
+      thursday: ["07:00-15:00"]
+      friday: ["07:00-15:00"]

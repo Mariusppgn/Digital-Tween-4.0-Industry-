@@ -1,0 +1,98 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "availability": {
+      "default": 1.0,
+      "exclusiveMinimum": 0,
+      "maximum": 1,
+      "title": "Availability",
+      "type": "number"
+    },
+    "capabilities": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Capabilities",
+      "type": "array"
+    },
+    "capacity_per_hour": {
+      "exclusiveMinimum": 0,
+      "title": "Capacity Per Hour",
+      "type": "number"
+    },
+    "capacity_unit": {
+      "default": "parts/hour",
+      "minLength": 1,
+      "title": "Capacity Unit",
+      "type": "string"
+    },
+    "machine_id": {
+      "minLength": 1,
+      "title": "Machine Id",
+      "type": "string"
+    },
+    "machine_type": {
+      "minLength": 1,
+      "title": "Machine Type",
+      "type": "string"
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "title": "Metadata",
+      "type": "object"
+    },
+    "mtbf_hours": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mtbf Hours"
+    },
+    "mttr_hours": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mttr Hours"
+    },
+    "name": {
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "provenance": {
+      "default": "asteria",
+      "minLength": 1,
+      "title": "Provenance",
+      "type": "string"
+    },
+    "schema_version": {
+      "default": "1.0.0",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "machine_id",
+    "name",
+    "machine_type",
+    "capabilities",
+    "capacity_per_hour"
+  ],
+  "title": "MachineConfig",
+  "type": "object"
+}
