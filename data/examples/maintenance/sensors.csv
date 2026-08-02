@@ -1,0 +1,7 @@
+sensor_id,machine_id,time_minutes,job_id,quality,load_ratio,temperature_c,vibration_mm_s,pressure_bar,power_kw,operating_age_hours,degradation_index,failure_probability
+dryer-01-sensor,dryer-01,0,order-001,good,0.78,114.0,2.10,3.80,420.0,700.0,0.70,0.010
+dryer-01-sensor,dryer-01,60,order-001,good,0.80,114.5,2.12,3.82,423.0,701.0,0.70,0.010
+dryer-01-sensor,dryer-01,120,order-002,good,0.79,114.2,2.08,3.79,421.0,702.0,0.70,0.010
+dryer-01-sensor,dryer-01,180,order-002,good,0.81,114.8,2.15,3.84,426.0,703.0,0.70,0.011
+dryer-01-sensor,dryer-01,240,order-003,good,0.80,114.4,2.11,3.81,424.0,704.0,0.70,0.011
+dryer-01-sensor,dryer-01,300,order-003,good,0.94,128.0,6.80,4.35,510.0,705.0,0.82,0.032

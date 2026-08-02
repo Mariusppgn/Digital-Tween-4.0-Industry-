@@ -3,464 +3,1082 @@ provenance: synthetic-engineering-hypotheses-not-calibrated
 factory_id: sylvapapers-demo
 name: SylvaPapers Manufacture
 timezone: Europe/Paris
-
-# Hypotheses only: every equipment type uses a Weibull time-to-failure density.
-# Coefficients must be calibrated from operating and maintenance history before
-# the model is used for industrial decisions.
 machine_types:
-  - machine_type: debarking
-    name: Écorceuse
-    failure_density: {family: weibull, shape: 2.2, scale_hours: 1600}
-    metadata: {calibration_status: synthetic_hypothesis, mean_repair_hours: 2.0}
-  - machine_type: chipping
-    name: Déchiqueteuse
-    failure_density: {family: weibull, shape: 1.9, scale_hours: 1200}
-    metadata: {calibration_status: synthetic_hypothesis, mean_repair_hours: 1.5}
-  - machine_type: chemical_pulping
-    name: Lessiveur kraft
-    failure_density: {family: weibull, shape: 2.8, scale_hours: 2400}
-    metadata: {calibration_status: synthetic_hypothesis, mean_repair_hours: 4.0}
-  - machine_type: thermomechanical_pulping
-    name: Raffineur thermomécanique
-    failure_density: {family: weibull, shape: 2.1, scale_hours: 1500}
-    metadata: {calibration_status: synthetic_hypothesis, mean_repair_hours: 3.0}
-  - machine_type: washing
-    name: Laveur de pâte
-    failure_density: {family: weibull, shape: 1.8, scale_hours: 1800}
-    metadata: {calibration_status: synthetic_hypothesis, mean_repair_hours: 1.5}
-  - machine_type: screening
-    name: Tamis sous pression
-    failure_density: {family: weibull, shape: 1.7, scale_hours: 1100}
-    metadata: {calibration_status: synthetic_hypothesis, mean_repair_hours: 1.0}
-  - machine_type: bleaching
-    name: Tour de blanchiment
-    failure_density: {family: weibull, shape: 2.4, scale_hours: 2200}
-    metadata: {calibration_status: synthetic_hypothesis, mean_repair_hours: 2.5}
-  - machine_type: stock_preparation
-    name: Cuve de préparation de pâte
-    failure_density: {family: weibull, shape: 1.6, scale_hours: 2000}
-    metadata: {calibration_status: synthetic_hypothesis, mean_repair_hours: 1.0}
-  - machine_type: refining
-    name: Raffineur de pâte
-    failure_density: {family: weibull, shape: 2.0, scale_hours: 1300}
-    metadata: {calibration_status: synthetic_hypothesis, mean_repair_hours: 2.0}
-  - machine_type: forming
-    name: Caisse de tête et table de formation
-    failure_density: {family: weibull, shape: 2.6, scale_hours: 2600}
-    metadata: {calibration_status: synthetic_hypothesis, mean_repair_hours: 3.0}
-  - machine_type: pressing
-    name: Presse humide
-    failure_density: {family: weibull, shape: 2.3, scale_hours: 1900}
-    metadata: {calibration_status: synthetic_hypothesis, mean_repair_hours: 2.5}
-  - machine_type: drying
-    name: Sécherie cylindrique
-    failure_density: {family: weibull, shape: 2.9, scale_hours: 2100}
-    metadata: {calibration_status: synthetic_hypothesis, mean_repair_hours: 3.5}
-  - machine_type: calendering
-    name: Calandre
-    failure_density: {family: weibull, shape: 2.0, scale_hours: 1700}
-    metadata: {calibration_status: synthetic_hypothesis, mean_repair_hours: 2.0}
-  - machine_type: winding
-    name: Bobineuse
-    failure_density: {family: weibull, shape: 1.9, scale_hours: 1400}
-    metadata: {calibration_status: synthetic_hypothesis, mean_repair_hours: 1.5}
-  - machine_type: quality_control
-    name: Contrôle qualité en ligne
-    failure_density: {family: weibull, shape: 1.5, scale_hours: 3000}
-    metadata: {calibration_status: synthetic_hypothesis, mean_repair_hours: 0.75}
-
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_type: debarking
+  name: Écorceuse
+  failure_density:
+    schema_version: 1.0.0
+    provenance: sylvapapers
+    family: weibull
+    shape: 2.2
+    scale_hours: 1600.0
+  metadata:
+    calibration_status: synthetic_hypothesis
+    mean_repair_hours: 2
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_type: chipping
+  name: Déchiqueteuse
+  failure_density:
+    schema_version: 1.0.0
+    provenance: sylvapapers
+    family: weibull
+    shape: 1.9
+    scale_hours: 1200.0
+  metadata:
+    calibration_status: synthetic_hypothesis
+    mean_repair_hours: 1.5
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_type: chemical_pulping
+  name: Lessiveur kraft
+  failure_density:
+    schema_version: 1.0.0
+    provenance: sylvapapers
+    family: weibull
+    shape: 2.8
+    scale_hours: 2400.0
+  metadata:
+    calibration_status: synthetic_hypothesis
+    mean_repair_hours: 4
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_type: thermomechanical_pulping
+  name: Raffineur thermomécanique
+  failure_density:
+    schema_version: 1.0.0
+    provenance: sylvapapers
+    family: weibull
+    shape: 2.1
+    scale_hours: 1500.0
+  metadata:
+    calibration_status: synthetic_hypothesis
+    mean_repair_hours: 3
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_type: washing
+  name: Laveur de pâte
+  failure_density:
+    schema_version: 1.0.0
+    provenance: sylvapapers
+    family: weibull
+    shape: 1.8
+    scale_hours: 1800.0
+  metadata:
+    calibration_status: synthetic_hypothesis
+    mean_repair_hours: 1.5
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_type: screening
+  name: Tamis sous pression
+  failure_density:
+    schema_version: 1.0.0
+    provenance: sylvapapers
+    family: weibull
+    shape: 1.7
+    scale_hours: 1100.0
+  metadata:
+    calibration_status: synthetic_hypothesis
+    mean_repair_hours: 1
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_type: bleaching
+  name: Tour de blanchiment
+  failure_density:
+    schema_version: 1.0.0
+    provenance: sylvapapers
+    family: weibull
+    shape: 2.4
+    scale_hours: 2200.0
+  metadata:
+    calibration_status: synthetic_hypothesis
+    mean_repair_hours: 2.5
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_type: stock_preparation
+  name: Cuve de préparation de pâte
+  failure_density:
+    schema_version: 1.0.0
+    provenance: sylvapapers
+    family: weibull
+    shape: 1.6
+    scale_hours: 2000.0
+  metadata:
+    calibration_status: synthetic_hypothesis
+    mean_repair_hours: 1
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_type: refining
+  name: Raffineur de pâte
+  failure_density:
+    schema_version: 1.0.0
+    provenance: sylvapapers
+    family: weibull
+    shape: 2.0
+    scale_hours: 1300.0
+  metadata:
+    calibration_status: synthetic_hypothesis
+    mean_repair_hours: 2
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_type: forming
+  name: Caisse de tête et table de formation
+  failure_density:
+    schema_version: 1.0.0
+    provenance: sylvapapers
+    family: weibull
+    shape: 2.6
+    scale_hours: 2600.0
+  metadata:
+    calibration_status: synthetic_hypothesis
+    mean_repair_hours: 3
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_type: pressing
+  name: Presse humide
+  failure_density:
+    schema_version: 1.0.0
+    provenance: sylvapapers
+    family: weibull
+    shape: 2.3
+    scale_hours: 1900.0
+  metadata:
+    calibration_status: synthetic_hypothesis
+    mean_repair_hours: 2.5
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_type: drying
+  name: Sécherie cylindrique
+  failure_density:
+    schema_version: 1.0.0
+    provenance: sylvapapers
+    family: weibull
+    shape: 2.9
+    scale_hours: 2100.0
+  metadata:
+    calibration_status: synthetic_hypothesis
+    mean_repair_hours: 3.5
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_type: calendering
+  name: Calandre
+  failure_density:
+    schema_version: 1.0.0
+    provenance: sylvapapers
+    family: weibull
+    shape: 2.0
+    scale_hours: 1700.0
+  metadata:
+    calibration_status: synthetic_hypothesis
+    mean_repair_hours: 2
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_type: winding
+  name: Bobineuse
+  failure_density:
+    schema_version: 1.0.0
+    provenance: sylvapapers
+    family: weibull
+    shape: 1.9
+    scale_hours: 1400.0
+  metadata:
+    calibration_status: synthetic_hypothesis
+    mean_repair_hours: 1.5
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_type: quality_control
+  name: Contrôle qualité en ligne
+  failure_density:
+    schema_version: 1.0.0
+    provenance: sylvapapers
+    family: weibull
+    shape: 1.5
+    scale_hours: 3000.0
+  metadata:
+    calibration_status: synthetic_hypothesis
+    mean_repair_hours: 0.75
 machines:
-  - machine_id: debarker-01
-    name: Écorceuse A
-    machine_type: debarking
-    capabilities: [debarking]
-    capacity_per_hour: 18
-    capacity_unit: tonnes/hour
-    availability: 0.96
-    mtbf_hours: 1600
-    mttr_hours: 2.0
-    metadata: {processing_time: 8, duration_cv: 0.06, setup_time: 2, energy_kw: 110, cost_per_hour: 95}
-  - machine_id: debarker-02
-    name: Écorceuse B
-    machine_type: debarking
-    capabilities: [debarking]
-    capacity_per_hour: 18
-    capacity_unit: tonnes/hour
-    availability: 0.96
-    mtbf_hours: 1600
-    mttr_hours: 2.0
-    metadata: {processing_time: 8, duration_cv: 0.06, setup_time: 2, energy_kw: 110, cost_per_hour: 95}
-  - machine_id: chipper-01
-    name: Déchiqueteuse A
-    machine_type: chipping
-    capabilities: [chipping]
-    capacity_per_hour: 15
-    capacity_unit: tonnes/hour
-    availability: 0.95
-    mtbf_hours: 1200
-    mttr_hours: 1.5
-    metadata: {processing_time: 10, duration_cv: 0.08, setup_time: 2, energy_kw: 180, cost_per_hour: 120}
-  - machine_id: chipper-02
-    name: Déchiqueteuse B
-    machine_type: chipping
-    capabilities: [chipping]
-    capacity_per_hour: 15
-    capacity_unit: tonnes/hour
-    availability: 0.95
-    mtbf_hours: 1200
-    mttr_hours: 1.5
-    metadata: {processing_time: 10, duration_cv: 0.08, setup_time: 2, energy_kw: 180, cost_per_hour: 120}
-  - machine_id: digester-01
-    name: Lessiveur kraft continu
-    machine_type: chemical_pulping
-    capabilities: [kraft_cooking]
-    capacity_per_hour: 8
-    capacity_unit: tonnes/hour
-    availability: 0.92
-    mtbf_hours: 2400
-    mttr_hours: 4.0
-    metadata: {processing_time: 55, duration_cv: 0.04, setup_time: 8, failure_probability: 0.06, repair_time: 240, energy_kw: 420, cost_per_hour: 310}
-  - machine_id: digester-02
-    name: Lessiveur kraft discontinu carton
-    machine_type: chemical_pulping
-    capabilities: [kraft_cooking, linerboard_pulping]
-    capacity_per_hour: 6
-    capacity_unit: tonnes/hour
-    availability: 0.92
-    mtbf_hours: 2400
-    mttr_hours: 4.0
-    metadata: {processing_time: 62, duration_cv: 0.05, setup_time: 10, failure_probability: 0.06, repair_time: 240, energy_kw: 380, cost_per_hour: 290}
-  - machine_id: tmp-refiner-01
-    name: Raffineur thermomécanique
-    machine_type: thermomechanical_pulping
-    capabilities: [thermomechanical_pulping]
-    capacity_per_hour: 7
-    capacity_unit: tonnes/hour
-    availability: 0.93
-    mtbf_hours: 1500
-    mttr_hours: 3.0
-    metadata: {processing_time: 48, duration_cv: 0.05, setup_time: 6, failure_probability: 0.05, repair_time: 180, energy_kw: 950, cost_per_hour: 390}
-  - machine_id: washer-01
-    name: Laveur de pâte
-    machine_type: washing
-    capabilities: [pulp_washing]
-    capacity_per_hour: 12
-    capacity_unit: tonnes/hour
-    availability: 0.97
-    mtbf_hours: 1800
-    mttr_hours: 1.5
-    metadata: {processing_time: 12, duration_cv: 0.04, setup_time: 2, energy_kw: 75, cost_per_hour: 80}
-  - machine_id: screen-01
-    name: Tamis sous pression
-    machine_type: screening
-    capabilities: [pulp_screening]
-    capacity_per_hour: 14
-    capacity_unit: tonnes/hour
-    availability: 0.96
-    mtbf_hours: 1100
-    mttr_hours: 1.0
-    metadata: {processing_time: 9, duration_cv: 0.05, setup_time: 2, energy_kw: 65, cost_per_hour: 72}
-  - machine_id: bleach-01
-    name: Tour de blanchiment A
-    machine_type: bleaching
-    capabilities: [bleaching]
-    capacity_per_hour: 7
-    capacity_unit: tonnes/hour
-    availability: 0.95
-    mtbf_hours: 2200
-    mttr_hours: 2.5
-    metadata: {processing_time: 35, duration_cv: 0.03, setup_time: 4, energy_kw: 90, cost_per_hour: 125}
-  - machine_id: bleach-02
-    name: Tour de blanchiment B
-    machine_type: bleaching
-    capabilities: [bleaching]
-    capacity_per_hour: 7
-    capacity_unit: tonnes/hour
-    availability: 0.95
-    mtbf_hours: 2200
-    mttr_hours: 2.5
-    metadata: {processing_time: 35, duration_cv: 0.03, setup_time: 4, energy_kw: 90, cost_per_hour: 125}
-  - machine_id: stock-prep-01
-    name: Cuve de préparation de pâte
-    machine_type: stock_preparation
-    capabilities: [stock_blending]
-    capacity_per_hour: 16
-    capacity_unit: tonnes/hour
-    availability: 0.98
-    mtbf_hours: 2000
-    mttr_hours: 1.0
-    metadata: {processing_time: 12, duration_cv: 0.04, setup_time: 3, energy_kw: 55, cost_per_hour: 68}
-  - machine_id: pulp-refiner-01
-    name: Raffineur final
-    machine_type: refining
-    capabilities: [fibre_refining]
-    capacity_per_hour: 13
-    capacity_unit: tonnes/hour
-    availability: 0.95
-    mtbf_hours: 1300
-    mttr_hours: 2.0
-    metadata: {processing_time: 14, duration_cv: 0.06, setup_time: 3, energy_kw: 360, cost_per_hour: 180}
-  - machine_id: former-01
-    name: Caisse de tête et table de formation
-    machine_type: forming
-    capabilities: [sheet_forming]
-    capacity_per_hour: 10
-    capacity_unit: rolls/hour
-    availability: 0.94
-    mtbf_hours: 2600
-    mttr_hours: 3.0
-    metadata: {processing_time: 22, duration_cv: 0.04, setup_time: 5, energy_kw: 520, cost_per_hour: 260}
-  - machine_id: press-01
-    name: Section de presses
-    machine_type: pressing
-    capabilities: [wet_pressing]
-    capacity_per_hour: 10
-    capacity_unit: rolls/hour
-    availability: 0.94
-    mtbf_hours: 1900
-    mttr_hours: 2.5
-    metadata: {processing_time: 18, duration_cv: 0.04, setup_time: 4, energy_kw: 440, cost_per_hour: 220}
-  - machine_id: dryer-01
-    name: Sécherie A
-    machine_type: drying
-    capabilities: [drying]
-    capacity_per_hour: 6
-    capacity_unit: rolls/hour
-    availability: 0.92
-    mtbf_hours: 2100
-    mttr_hours: 3.5
-    metadata: {processing_time: 38, duration_cv: 0.05, setup_time: 5, failure_probability: 0.08, repair_time: 210, degradation_after: 7, degradation_factor: 1.08, maintenance_recovery: 0.65, energy_kw: 1800, cost_per_hour: 520}
-  - machine_id: dryer-02
-    name: Sécherie B
-    machine_type: drying
-    capabilities: [drying]
-    capacity_per_hour: 6
-    capacity_unit: rolls/hour
-    availability: 0.92
-    mtbf_hours: 2100
-    mttr_hours: 3.5
-    metadata: {processing_time: 38, duration_cv: 0.05, setup_time: 5, failure_probability: 0.08, repair_time: 210, degradation_after: 7, degradation_factor: 1.08, maintenance_recovery: 0.65, energy_kw: 1800, cost_per_hour: 520}
-  - machine_id: calender-01
-    name: Calandre
-    machine_type: calendering
-    capabilities: [calendering]
-    capacity_per_hour: 11
-    capacity_unit: rolls/hour
-    availability: 0.96
-    mtbf_hours: 1700
-    mttr_hours: 2.0
-    metadata: {processing_time: 12, duration_cv: 0.04, setup_time: 3, energy_kw: 260, cost_per_hour: 150}
-  - machine_id: winder-01
-    name: Bobineuse A
-    machine_type: winding
-    capabilities: [winding]
-    capacity_per_hour: 7
-    capacity_unit: rolls/hour
-    availability: 0.95
-    mtbf_hours: 1400
-    mttr_hours: 1.5
-    metadata: {processing_time: 16, duration_cv: 0.06, setup_time: 4, energy_kw: 190, cost_per_hour: 135}
-  - machine_id: winder-02
-    name: Bobineuse B
-    machine_type: winding
-    capabilities: [winding]
-    capacity_per_hour: 7
-    capacity_unit: rolls/hour
-    availability: 0.95
-    mtbf_hours: 1400
-    mttr_hours: 1.5
-    metadata: {processing_time: 16, duration_cv: 0.06, setup_time: 4, energy_kw: 190, cost_per_hour: 135}
-  - machine_id: qc-01
-    name: Contrôle qualité en ligne
-    machine_type: quality_control
-    capabilities: [basis_weight_control, moisture_control, visual_inspection]
-    capacity_per_hour: 16
-    capacity_unit: rolls/hour
-    availability: 0.99
-    mtbf_hours: 3000
-    mttr_hours: 0.75
-    metadata: {processing_time: 6, duration_cv: 0.03, defect_rate: 0.08, load_defect_slope: 0.01, energy_kw: 18, cost_per_hour: 70}
-
-# The node positions are persisted editor coordinates. Users may add, remove,
-# reconnect and drag steps without changing the contract format.
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_id: debarker-01
+  name: Écorceuse A
+  machine_type: debarking
+  capabilities:
+  - debarking
+  capacity_per_hour: 18.0
+  capacity_unit: tonnes/hour
+  availability: 0.96
+  mtbf_hours: 1600.0
+  mttr_hours: 2.0
+  metadata:
+    processing_time: 8
+    duration_cv: 0.06
+    setup_time: 2
+    energy_kw: 110
+    cost_per_hour: 95
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_id: debarker-02
+  name: Écorceuse B
+  machine_type: debarking
+  capabilities:
+  - debarking
+  capacity_per_hour: 18.0
+  capacity_unit: tonnes/hour
+  availability: 0.96
+  mtbf_hours: 1600.0
+  mttr_hours: 2.0
+  metadata:
+    processing_time: 8
+    duration_cv: 0.06
+    setup_time: 2
+    energy_kw: 110
+    cost_per_hour: 95
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_id: chipper-01
+  name: Déchiqueteuse A
+  machine_type: chipping
+  capabilities:
+  - chipping
+  capacity_per_hour: 15.0
+  capacity_unit: tonnes/hour
+  availability: 0.95
+  mtbf_hours: 1200.0
+  mttr_hours: 1.5
+  metadata:
+    processing_time: 10
+    duration_cv: 0.08
+    setup_time: 2
+    energy_kw: 180
+    cost_per_hour: 120
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_id: chipper-02
+  name: Déchiqueteuse B
+  machine_type: chipping
+  capabilities:
+  - chipping
+  capacity_per_hour: 15.0
+  capacity_unit: tonnes/hour
+  availability: 0.95
+  mtbf_hours: 1200.0
+  mttr_hours: 1.5
+  metadata:
+    processing_time: 10
+    duration_cv: 0.08
+    setup_time: 2
+    energy_kw: 180
+    cost_per_hour: 120
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_id: digester-01
+  name: Lessiveur kraft continu
+  machine_type: chemical_pulping
+  capabilities:
+  - kraft_cooking
+  capacity_per_hour: 8.0
+  capacity_unit: tonnes/hour
+  availability: 0.92
+  mtbf_hours: 2400.0
+  mttr_hours: 4.0
+  metadata:
+    processing_time: 55
+    duration_cv: 0.04
+    setup_time: 8
+    failure_probability: 0.06
+    repair_time: 240
+    energy_kw: 420
+    cost_per_hour: 310
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_id: digester-02
+  name: Lessiveur kraft discontinu carton
+  machine_type: chemical_pulping
+  capabilities:
+  - kraft_cooking
+  - linerboard_pulping
+  capacity_per_hour: 6.0
+  capacity_unit: tonnes/hour
+  availability: 0.92
+  mtbf_hours: 2400.0
+  mttr_hours: 4.0
+  metadata:
+    processing_time: 62
+    duration_cv: 0.05
+    setup_time: 10
+    failure_probability: 0.06
+    repair_time: 240
+    energy_kw: 380
+    cost_per_hour: 290
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_id: tmp-refiner-01
+  name: Raffineur thermomécanique
+  machine_type: thermomechanical_pulping
+  capabilities:
+  - thermomechanical_pulping
+  capacity_per_hour: 7.0
+  capacity_unit: tonnes/hour
+  availability: 0.93
+  mtbf_hours: 1500.0
+  mttr_hours: 3.0
+  metadata:
+    processing_time: 48
+    duration_cv: 0.05
+    setup_time: 6
+    failure_probability: 0.05
+    repair_time: 180
+    energy_kw: 950
+    cost_per_hour: 390
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_id: washer-01
+  name: Laveur de pâte
+  machine_type: washing
+  capabilities:
+  - pulp_washing
+  capacity_per_hour: 12.0
+  capacity_unit: tonnes/hour
+  availability: 0.97
+  mtbf_hours: 1800.0
+  mttr_hours: 1.5
+  metadata:
+    processing_time: 12
+    duration_cv: 0.04
+    setup_time: 2
+    energy_kw: 75
+    cost_per_hour: 80
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_id: screen-01
+  name: Tamis sous pression
+  machine_type: screening
+  capabilities:
+  - pulp_screening
+  capacity_per_hour: 14.0
+  capacity_unit: tonnes/hour
+  availability: 0.96
+  mtbf_hours: 1100.0
+  mttr_hours: 1.0
+  metadata:
+    processing_time: 9
+    duration_cv: 0.05
+    setup_time: 2
+    energy_kw: 65
+    cost_per_hour: 72
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_id: bleach-01
+  name: Tour de blanchiment A
+  machine_type: bleaching
+  capabilities:
+  - bleaching
+  capacity_per_hour: 7.0
+  capacity_unit: tonnes/hour
+  availability: 0.95
+  mtbf_hours: 2200.0
+  mttr_hours: 2.5
+  metadata:
+    processing_time: 35
+    duration_cv: 0.03
+    setup_time: 4
+    energy_kw: 90
+    cost_per_hour: 125
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_id: bleach-02
+  name: Tour de blanchiment B
+  machine_type: bleaching
+  capabilities:
+  - bleaching
+  capacity_per_hour: 7.0
+  capacity_unit: tonnes/hour
+  availability: 0.95
+  mtbf_hours: 2200.0
+  mttr_hours: 2.5
+  metadata:
+    processing_time: 35
+    duration_cv: 0.03
+    setup_time: 4
+    energy_kw: 90
+    cost_per_hour: 125
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_id: stock-prep-01
+  name: Cuve de préparation de pâte
+  machine_type: stock_preparation
+  capabilities:
+  - stock_blending
+  capacity_per_hour: 16.0
+  capacity_unit: tonnes/hour
+  availability: 0.98
+  mtbf_hours: 2000.0
+  mttr_hours: 1.0
+  metadata:
+    processing_time: 12
+    duration_cv: 0.04
+    setup_time: 3
+    energy_kw: 55
+    cost_per_hour: 68
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_id: pulp-refiner-01
+  name: Raffineur final
+  machine_type: refining
+  capabilities:
+  - fibre_refining
+  capacity_per_hour: 13.0
+  capacity_unit: tonnes/hour
+  availability: 0.95
+  mtbf_hours: 1300.0
+  mttr_hours: 2.0
+  metadata:
+    processing_time: 14
+    duration_cv: 0.06
+    setup_time: 3
+    energy_kw: 360
+    cost_per_hour: 180
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_id: former-01
+  name: Caisse de tête et table de formation
+  machine_type: forming
+  capabilities:
+  - sheet_forming
+  capacity_per_hour: 10.0
+  capacity_unit: rolls/hour
+  availability: 0.94
+  mtbf_hours: 2600.0
+  mttr_hours: 3.0
+  metadata:
+    processing_time: 22
+    duration_cv: 0.04
+    setup_time: 5
+    energy_kw: 520
+    cost_per_hour: 260
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_id: press-01
+  name: Section de presses
+  machine_type: pressing
+  capabilities:
+  - wet_pressing
+  capacity_per_hour: 10.0
+  capacity_unit: rolls/hour
+  availability: 0.94
+  mtbf_hours: 1900.0
+  mttr_hours: 2.5
+  metadata:
+    processing_time: 18
+    duration_cv: 0.04
+    setup_time: 4
+    energy_kw: 440
+    cost_per_hour: 220
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_id: dryer-01
+  name: Sécherie A
+  machine_type: drying
+  capabilities:
+  - drying
+  capacity_per_hour: 6.0
+  capacity_unit: rolls/hour
+  availability: 0.92
+  mtbf_hours: 2100.0
+  mttr_hours: 3.5
+  metadata:
+    processing_time: 38
+    duration_cv: 0.05
+    setup_time: 5
+    failure_probability: 0.08
+    repair_time: 210
+    degradation_after: 7
+    degradation_factor: 1.08
+    maintenance_recovery: 0.65
+    preventive_interval_hours: 250
+    preventive_maintenance_duration_minutes: 90
+    preventive_maintenance_recovery: 0.8
+    energy_kw: 1800
+    cost_per_hour: 520
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_id: dryer-02
+  name: Sécherie B
+  machine_type: drying
+  capabilities:
+  - drying
+  capacity_per_hour: 6.0
+  capacity_unit: rolls/hour
+  availability: 0.92
+  mtbf_hours: 2100.0
+  mttr_hours: 3.5
+  metadata:
+    processing_time: 38
+    duration_cv: 0.05
+    setup_time: 5
+    failure_probability: 0.08
+    repair_time: 210
+    degradation_after: 7
+    degradation_factor: 1.08
+    maintenance_recovery: 0.65
+    preventive_interval_hours: 250
+    preventive_maintenance_duration_minutes: 90
+    preventive_maintenance_recovery: 0.8
+    energy_kw: 1800
+    cost_per_hour: 520
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_id: calender-01
+  name: Calandre
+  machine_type: calendering
+  capabilities:
+  - calendering
+  capacity_per_hour: 11.0
+  capacity_unit: rolls/hour
+  availability: 0.96
+  mtbf_hours: 1700.0
+  mttr_hours: 2.0
+  metadata:
+    processing_time: 12
+    duration_cv: 0.04
+    setup_time: 3
+    energy_kw: 260
+    cost_per_hour: 150
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_id: winder-01
+  name: Bobineuse A
+  machine_type: winding
+  capabilities:
+  - winding
+  capacity_per_hour: 7.0
+  capacity_unit: rolls/hour
+  availability: 0.95
+  mtbf_hours: 1400.0
+  mttr_hours: 1.5
+  metadata:
+    processing_time: 16
+    duration_cv: 0.06
+    setup_time: 4
+    energy_kw: 190
+    cost_per_hour: 135
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_id: winder-02
+  name: Bobineuse B
+  machine_type: winding
+  capabilities:
+  - winding
+  capacity_per_hour: 7.0
+  capacity_unit: rolls/hour
+  availability: 0.95
+  mtbf_hours: 1400.0
+  mttr_hours: 1.5
+  metadata:
+    processing_time: 16
+    duration_cv: 0.06
+    setup_time: 4
+    energy_kw: 190
+    cost_per_hour: 135
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  machine_id: qc-01
+  name: Contrôle qualité en ligne
+  machine_type: quality_control
+  capabilities:
+  - basis_weight_control
+  - moisture_control
+  - visual_inspection
+  capacity_per_hour: 16.0
+  capacity_unit: rolls/hour
+  availability: 0.99
+  mtbf_hours: 3000.0
+  mttr_hours: 0.75
+  metadata:
+    processing_time: 6
+    duration_cv: 0.03
+    defect_rate: 0.08
+    load_defect_slope: 0.01
+    energy_kw: 18
+    cost_per_hour: 70
 process_graph:
   schema_version: 1.0.0
   provenance: synthetic-papermaking-process-hypotheses
   nodes:
-    - node_id: raw-wood
-      kind: source
-      name: Bois brut
-      output_materials: [grumes]
-      position: {x: 0, y: 300}
-    - node_id: debarking
-      kind: operation
-      name: Écorçage en parallèle
-      machine_ids: [debarker-01, debarker-02]
-      input_materials: [grumes]
-      output_materials: [bois_écorcé]
-      position: {x: 220, y: 300}
-    - node_id: chipping
-      kind: operation
-      name: Déchiquetage en parallèle
-      machine_ids: [chipper-01, chipper-02]
-      input_materials: [bois_écorcé]
-      output_materials: [copeaux]
-      position: {x: 440, y: 300}
-    - node_id: chips-buffer
-      kind: buffer
-      name: Silo à copeaux
-      capacity: 80
-      capacity_unit: tonnes
-      input_materials: [copeaux]
-      output_materials: [copeaux]
-      position: {x: 660, y: 300}
-    - node_id: kraft-pulping
-      kind: operation
-      name: Cuisson kraft
-      machine_ids: [digester-01]
-      input_materials: [copeaux]
-      output_materials: [pâte_kraft_brune]
-      position: {x: 900, y: 180}
-    - node_id: tmp-pulping
-      kind: operation
-      name: Pâte thermomécanique
-      machine_ids: [tmp-refiner-01]
-      input_materials: [copeaux]
-      output_materials: [pâte_tmp]
-      position: {x: 900, y: 420}
-    - node_id: board-pulping
-      kind: operation
-      name: Cuisson pâte carton
-      machine_ids: [digester-02]
-      input_materials: [copeaux]
-      output_materials: [pâte_carton]
-      position: {x: 900, y: 600}
-    - node_id: pulp-washing
-      kind: operation
-      name: Lavage de la pâte
-      machine_ids: [washer-01]
-      input_materials: [pâte_kraft_brune, pâte_tmp, pâte_carton]
-      output_materials: [pâte_lavée]
-      position: {x: 1140, y: 300}
-    - node_id: screening
-      kind: operation
-      name: Épuration et tamisage
-      machine_ids: [screen-01]
-      input_materials: [pâte_lavée]
-      output_materials: [pâte_épurée]
-      position: {x: 1360, y: 300}
-    - node_id: bleaching
-      kind: operation
-      name: Blanchiment en parallèle
-      machine_ids: [bleach-01, bleach-02]
-      input_materials: [pâte_épurée]
-      output_materials: [pâte_blanche]
-      position: {x: 1580, y: 300}
-    - node_id: stock-preparation
-      kind: operation
-      name: Préparation et mélange de pâte
-      machine_ids: [stock-prep-01]
-      input_materials: [pâte_blanche, additifs]
-      output_materials: [suspension_papetière]
-      position: {x: 1800, y: 300}
-    - node_id: refining
-      kind: operation
-      name: Raffinage final
-      machine_ids: [pulp-refiner-01]
-      input_materials: [suspension_papetière]
-      output_materials: [pâte_raffinée]
-      position: {x: 2020, y: 300}
-    - node_id: forming
-      kind: operation
-      name: Formation de la feuille
-      machine_ids: [former-01]
-      input_materials: [pâte_raffinée]
-      output_materials: [feuille_humide]
-      position: {x: 2240, y: 300}
-    - node_id: pressing
-      kind: operation
-      name: Pressage
-      machine_ids: [press-01]
-      input_materials: [feuille_humide]
-      output_materials: [feuille_pressée]
-      position: {x: 2460, y: 300}
-    - node_id: drying
-      kind: operation
-      name: Séchage en parallèle
-      machine_ids: [dryer-01, dryer-02]
-      input_materials: [feuille_pressée]
-      output_materials: [papier_sec]
-      position: {x: 2680, y: 300}
-    - node_id: calendering
-      kind: operation
-      name: Calandrage
-      machine_ids: [calender-01]
-      input_materials: [papier_sec]
-      output_materials: [papier_fini]
-      position: {x: 2900, y: 300}
-    - node_id: winding
-      kind: operation
-      name: Bobinage en parallèle
-      machine_ids: [winder-01, winder-02]
-      input_materials: [papier_fini]
-      output_materials: [rouleaux_non_contrôlés]
-      position: {x: 3120, y: 300}
-    - node_id: quality-control
-      kind: quality_control
-      name: Contrôle qualité
-      machine_ids: [qc-01]
-      input_materials: [rouleaux_non_contrôlés]
-      output_materials: [rouleaux_conformes, rouleaux_non_conformes]
-      position: {x: 3340, y: 300}
-    - node_id: paper-rolls
-      kind: sink
-      name: Rouleaux de papier
-      input_materials: [rouleaux_conformes]
-      position: {x: 3560, y: 300}
-    - node_id: measured-losses
-      kind: sink
-      name: Pertes qualité mesurées
-      input_materials: [rouleaux_non_conformes]
-      position: {x: 3560, y: 500}
-      metadata: {kpi: quality_loss_rate, measurement_unit: roll}
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    node_id: raw-wood
+    kind: source
+    name: Bois brut
+    machine_ids: []
+    input_materials: []
+    output_materials:
+    - grumes
+    position:
+      x: 60.0
+      y: 70.0
+    metadata: {}
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    node_id: debarking
+    kind: operation
+    name: Écorçage en parallèle
+    machine_ids:
+    - debarker-01
+    - debarker-02
+    input_materials:
+    - grumes
+    output_materials:
+    - bois_écorcé
+    position:
+      x: 310.0
+      y: 70.0
+    metadata: {}
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    node_id: chipping
+    kind: operation
+    name: Déchiquetage en parallèle
+    machine_ids:
+    - chipper-01
+    - chipper-02
+    input_materials:
+    - bois_écorcé
+    output_materials:
+    - copeaux
+    position:
+      x: 560.0
+      y: 70.0
+    metadata: {}
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    node_id: chips-buffer
+    kind: buffer
+    name: Silo à copeaux
+    machine_ids: []
+    capacity: 80.0
+    capacity_unit: tonnes
+    input_materials:
+    - copeaux
+    output_materials:
+    - copeaux
+    position:
+      x: 810.0
+      y: 70.0
+    metadata: {}
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    node_id: kraft-pulping
+    kind: operation
+    name: Cuisson kraft
+    machine_ids:
+    - digester-01
+    input_materials:
+    - copeaux
+    output_materials:
+    - pâte_kraft_brune
+    position:
+      x: 1060.0
+      y: 70.0
+    metadata: {}
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    node_id: tmp-pulping
+    kind: operation
+    name: Pâte thermomécanique
+    machine_ids:
+    - tmp-refiner-01
+    input_materials:
+    - copeaux
+    output_materials:
+    - pâte_tmp
+    position:
+      x: 1060.0
+      y: 235.0
+    metadata: {}
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    node_id: board-pulping
+    kind: operation
+    name: Cuisson pâte carton
+    machine_ids:
+    - digester-02
+    input_materials:
+    - copeaux
+    output_materials:
+    - pâte_carton
+    position:
+      x: 1060.0
+      y: 400.0
+    metadata: {}
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    node_id: pulp-washing
+    kind: operation
+    name: Lavage de la pâte
+    machine_ids:
+    - washer-01
+    input_materials:
+    - pâte_kraft_brune
+    - pâte_tmp
+    - pâte_carton
+    output_materials:
+    - pâte_lavée
+    position:
+      x: 1310.0
+      y: 70.0
+    metadata: {}
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    node_id: screening
+    kind: operation
+    name: Épuration et tamisage
+    machine_ids:
+    - screen-01
+    input_materials:
+    - pâte_lavée
+    output_materials:
+    - pâte_épurée
+    position:
+      x: 1560.0
+      y: 70.0
+    metadata: {}
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    node_id: bleaching
+    kind: operation
+    name: Blanchiment en parallèle
+    machine_ids:
+    - bleach-01
+    - bleach-02
+    input_materials:
+    - pâte_épurée
+    output_materials:
+    - pâte_blanche
+    position:
+      x: 1810.0
+      y: 70.0
+    metadata: {}
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    node_id: stock-preparation
+    kind: operation
+    name: Préparation et mélange de pâte
+    machine_ids:
+    - stock-prep-01
+    input_materials:
+    - pâte_blanche
+    - additifs
+    output_materials:
+    - suspension_papetière
+    position:
+      x: 2060.0
+      y: 70.0
+    metadata: {}
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    node_id: refining
+    kind: operation
+    name: Raffinage final
+    machine_ids:
+    - pulp-refiner-01
+    input_materials:
+    - suspension_papetière
+    output_materials:
+    - pâte_raffinée
+    position:
+      x: 2310.0
+      y: 70.0
+    metadata: {}
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    node_id: forming
+    kind: operation
+    name: Formation de la feuille
+    machine_ids:
+    - former-01
+    input_materials:
+    - pâte_raffinée
+    output_materials:
+    - feuille_humide
+    position:
+      x: 2560.0
+      y: 70.0
+    metadata: {}
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    node_id: pressing
+    kind: operation
+    name: Pressage
+    machine_ids:
+    - press-01
+    input_materials:
+    - feuille_humide
+    output_materials:
+    - feuille_pressée
+    position:
+      x: 2810.0
+      y: 70.0
+    metadata: {}
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    node_id: drying
+    kind: operation
+    name: Séchage en parallèle
+    machine_ids:
+    - dryer-01
+    - dryer-02
+    input_materials:
+    - feuille_pressée
+    output_materials:
+    - papier_sec
+    position:
+      x: 3060.0
+      y: 70.0
+    metadata: {}
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    node_id: calendering
+    kind: operation
+    name: Calandrage
+    machine_ids:
+    - calender-01
+    input_materials:
+    - papier_sec
+    output_materials:
+    - papier_fini
+    position:
+      x: 3310.0
+      y: 70.0
+    metadata: {}
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    node_id: winding
+    kind: operation
+    name: Bobinage en parallèle
+    machine_ids:
+    - winder-01
+    - winder-02
+    input_materials:
+    - papier_fini
+    output_materials:
+    - rouleaux_non_contrôlés
+    position:
+      x: 3560.0
+      y: 70.0
+    metadata: {}
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    node_id: quality-control
+    kind: quality_control
+    name: Contrôle qualité
+    machine_ids:
+    - qc-01
+    input_materials:
+    - rouleaux_non_contrôlés
+    output_materials:
+    - rouleaux_conformes
+    - rouleaux_non_conformes
+    position:
+      x: 3810.0
+      y: 70.0
+    metadata: {}
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    node_id: paper-rolls
+    kind: sink
+    name: Rouleaux de papier
+    machine_ids: []
+    input_materials:
+    - rouleaux_conformes
+    output_materials: []
+    position:
+      x: 4060.0
+      y: 70.0
+    metadata: {}
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    node_id: measured-losses
+    kind: sink
+    name: Pertes qualité mesurées
+    machine_ids: []
+    input_materials:
+    - rouleaux_non_conformes
+    output_materials: []
+    position:
+      x: 4060.0
+      y: 235.0
+    metadata:
+      kpi: quality_loss_rate
+      measurement_unit: roll
   edges:
-    - {source: raw-wood, target: debarking, material: grumes}
-    - {source: debarking, target: chipping, material: bois_écorcé}
-    - {source: chipping, target: chips-buffer, material: copeaux}
-    - {source: chips-buffer, target: kraft-pulping, condition: papier_kraft, material: copeaux}
-    - {source: chips-buffer, target: tmp-pulping, condition: papier_impression, material: copeaux}
-    - {source: chips-buffer, target: board-pulping, condition: carton, material: copeaux}
-    - {source: kraft-pulping, target: pulp-washing, material: pâte_kraft_brune}
-    - {source: tmp-pulping, target: pulp-washing, material: pâte_tmp}
-    - {source: board-pulping, target: pulp-washing, material: pâte_carton}
-    - {source: pulp-washing, target: screening, material: pâte_lavée}
-    - {source: screening, target: bleaching, condition: qualité_blanche, material: pâte_épurée}
-    - {source: screening, target: stock-preparation, condition: qualité_non_blanche, material: pâte_épurée}
-    - {source: bleaching, target: stock-preparation, material: pâte_blanche}
-    - {source: stock-preparation, target: refining, material: suspension_papetière}
-    - {source: refining, target: forming, material: pâte_raffinée}
-    - {source: forming, target: pressing, material: feuille_humide}
-    - {source: pressing, target: drying, material: feuille_pressée}
-    - {source: drying, target: calendering, material: papier_sec}
-    - {source: calendering, target: winding, material: papier_fini}
-    - {source: winding, target: quality-control, material: rouleaux_non_contrôlés}
-    - {source: quality-control, target: paper-rolls, condition: conforme, probability: 0.92, material: rouleaux_conformes}
-    - {source: quality-control, target: measured-losses, condition: non_conforme, probability: 0.08, material: rouleaux_non_conformes}
-
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    source: raw-wood
+    target: debarking
+    material: grumes
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    source: debarking
+    target: chipping
+    material: bois_écorcé
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    source: chipping
+    target: chips-buffer
+    material: copeaux
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    source: chips-buffer
+    target: kraft-pulping
+    condition: papier_kraft
+    material: copeaux
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    source: chips-buffer
+    target: tmp-pulping
+    condition: papier_impression
+    material: copeaux
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    source: chips-buffer
+    target: board-pulping
+    condition: carton
+    material: copeaux
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    source: kraft-pulping
+    target: pulp-washing
+    material: pâte_kraft_brune
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    source: tmp-pulping
+    target: pulp-washing
+    material: pâte_tmp
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    source: board-pulping
+    target: pulp-washing
+    material: pâte_carton
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    source: pulp-washing
+    target: screening
+    material: pâte_lavée
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    source: screening
+    target: bleaching
+    condition: qualité_blanche
+    material: pâte_épurée
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    source: screening
+    target: stock-preparation
+    condition: qualité_non_blanche
+    material: pâte_épurée
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    source: bleaching
+    target: stock-preparation
+    material: pâte_blanche
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    source: stock-preparation
+    target: refining
+    material: suspension_papetière
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    source: refining
+    target: forming
+    material: pâte_raffinée
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    source: forming
+    target: pressing
+    material: feuille_humide
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    source: pressing
+    target: drying
+    material: feuille_pressée
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    source: drying
+    target: calendering
+    material: papier_sec
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    source: calendering
+    target: winding
+    material: papier_fini
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    source: winding
+    target: quality-control
+    material: rouleaux_non_contrôlés
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    source: quality-control
+    target: paper-rolls
+    condition: conforme
+    probability: 0.92
+    material: rouleaux_conformes
+  - schema_version: 1.0.0
+    provenance: sylvapapers
+    source: quality-control
+    target: measured-losses
+    condition: non_conforme
+    probability: 0.08
+    material: rouleaux_non_conformes
 resource_calendars:
-  - resource_id: production-team
-    timezone: Europe/Paris
-    weekly_shifts:
-      monday: ["06:00-14:00", "14:00-22:00", "22:00-06:00"]
-      tuesday: ["06:00-14:00", "14:00-22:00", "22:00-06:00"]
-      wednesday: ["06:00-14:00", "14:00-22:00", "22:00-06:00"]
-      thursday: ["06:00-14:00", "14:00-22:00", "22:00-06:00"]
-      friday: ["06:00-14:00", "14:00-22:00", "22:00-06:00"]
-  - resource_id: maintenance-team
-    timezone: Europe/Paris
-    weekly_shifts:
-      monday: ["06:00-14:00", "14:00-22:00"]
-      tuesday: ["06:00-14:00", "14:00-22:00"]
-      wednesday: ["06:00-14:00", "14:00-22:00"]
-      thursday: ["06:00-14:00", "14:00-22:00"]
-      friday: ["06:00-14:00", "14:00-22:00"]
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  resource_id: production-team
+  timezone: Europe/Paris
+  weekly_shifts:
+    monday:
+    - 06:00-14:00
+    - 14:00-22:00
+    - 22:00-06:00
+    tuesday:
+    - 06:00-14:00
+    - 14:00-22:00
+    - 22:00-06:00
+    wednesday:
+    - 06:00-14:00
+    - 14:00-22:00
+    - 22:00-06:00
+    thursday:
+    - 06:00-14:00
+    - 14:00-22:00
+    - 22:00-06:00
+    friday:
+    - 06:00-14:00
+    - 14:00-22:00
+    - 22:00-06:00
+  exceptions: {}
+- schema_version: 1.0.0
+  provenance: sylvapapers
+  resource_id: maintenance-team
+  timezone: Europe/Paris
+  weekly_shifts:
+    monday:
+    - 06:00-14:00
+    - 14:00-22:00
+    tuesday:
+    - 06:00-14:00
+    - 14:00-22:00
+    wednesday:
+    - 06:00-14:00
+    - 14:00-22:00
+    thursday:
+    - 06:00-14:00
+    - 14:00-22:00
+    friday:
+    - 06:00-14:00
+    - 14:00-22:00
+  exceptions: {}

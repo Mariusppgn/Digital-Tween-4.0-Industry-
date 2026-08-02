@@ -2,28 +2,50 @@
 
 ## 1. Objectif
 
-Conserver édition, validation et simulation rapide de l'usine sur un ordinateur développeur. Ces
-budgets sont des garde-fous d'ingénierie, pas des engagements de service de production.
+Conserver édition, simulation du Module A et analyse de maintenance du Module B sur un ordinateur
+développeur standard sans GPU. Ces budgets sont des garde-fous d'ingénierie, pas des engagements de
+service mesurés.
 
-## 2. Profil rapide
+## 2. Profils
 
-| Activité | Budget |
-|---|---:|
-| Validation contrats et graphe | < 2 s |
-| Simulation de dix rouleaux sans figures | < 30 s |
-| Chargement initial de l'éditeur | < 3 s |
-| Suite locale complète | < 30 s |
+| Profil | Charge prévue | Garde-fou de bout en bout |
+|---|---|---:|
+| `fast` | scénario de vérification, tests et une passe maintenance | < 30 s par exécution simple |
+| `standard` | un mois industriel, plusieurs réplications et comparaison des politiques | < 2 min |
+| `research` | sensibilité facultative ou comparaison de méthode avancée | < 5 min par configuration par défaut |
 
-## 3. Mémoire et sorties
+Un benchmark nommé doit consigner matériel, version Python, scénario, graine, répétitions, comptes
+d'artefacts et temps avant de présenter un garde-fou comme résultat observé.
 
-La configuration reste lisible. Les événements sont compacts ; figures et résultats sont écrits hors
-des sources. L'éditeur limite les charges de sauvegarde à 2 Mo.
+## 3. Budgets des modules
 
-## 4. Gardes de terminaison
+| Activité | Cible `fast` | Contrôle de dimension |
+|---|---:|---|
+| Validation contrats et graphe | < 2 s | taille du graphe et nombre de schémas |
+| Chargement initial de l'éditeur | < 3 s | nœuds, arêtes et sauvegarde limitée à 2 Mo |
+| Simulation simple Module A | < 30 s | commandes, horizon et figures facultatives |
+| Analyse baseline Module B | < 30 s | machines, relevés, horizon et figures |
+| Suite locale complète | < 60 s | hors installation des dépendances |
 
-Les gammes produit doivent atteindre un puits. Le modèle SylvaPapers ne contient aucun cycle de
-recyclage ou reprise ; les rejets qualité quittent le procédé comme pertes mesurées.
+## 4. Mémoire et sorties
 
-## 5. Mesure
+Les configurations restent lisibles. Les observations tabulaires sont compactes, tandis que figures
+et résultats sont écrits hors des sources. Les sorties A et B utilisent des dossiers séparés pour que
+l'analyse de maintenance ne puisse écraser ses preuves sources.
 
-Chaque résumé consigne version Python, plateforme, graine, scénario, durée et comptes de résultats.
+## 5. Politique algorithmique
+
+EWMA, seuils robustes et calculs Weibull fermés sont les baselines pour portable. Les méthodes CUSUM,
+survie, espace-état ou apprentissage facultatives doivent partager les mêmes contrats, exposer leur
+coût et rester désactivées en `fast`.
+
+## 6. Gardes de terminaison
+
+Les gammes doivent atteindre un puits. L'usine ne contient aucun recyclage ou reprise. Horizon,
+commandes et taille de sortie sont bornés par la configuration validée ; l'entrée maintenance doit
+être un paquet fini et complet.
+
+## 7. Mesure
+
+Chaque résumé consigne versions Python, plateforme, schéma et code, graine, profil, scénario, durée,
+chemins d'entrée et de sortie et comptes de résultats.

@@ -2,6 +2,7 @@
 
 from .loaders import load_factory_config, load_model, load_simulation_scenario
 from .models import (
+    AnomalyResult,
     DemandForecast,
     DemandPoint,
     DemandScenario,
@@ -16,6 +17,11 @@ from .models import (
     MachineState,
     MachineStatus,
     MachineTypeConfig,
+    MaintenanceAnalysisConfig,
+    MaintenanceAssessment,
+    MaintenanceEconomicConfig,
+    MaintenanceIntervention,
+    MaintenancePolicyCost,
     MaintenanceRecommendation,
     MarketingCampaign,
     MarketingPlan,
@@ -27,6 +33,7 @@ from .models import (
     ProductionSchedule,
     RDPortfolio,
     RDProject,
+    ReliabilityEstimate,
     ResourceCalendar,
     ScheduleAssignment,
     SensorRecord,
@@ -36,6 +43,7 @@ from .models import (
 from .schema import contract_types, export_json_schemas
 
 __all__ = [
+    "AnomalyResult",
     "DemandForecast",
     "DemandPoint",
     "DemandScenario",
@@ -50,6 +58,11 @@ __all__ = [
     "MachineState",
     "MachineStatus",
     "MachineTypeConfig",
+    "MaintenanceAnalysisConfig",
+    "MaintenanceAssessment",
+    "MaintenanceEconomicConfig",
+    "MaintenanceIntervention",
+    "MaintenancePolicyCost",
     "MaintenanceRecommendation",
     "MarketingCampaign",
     "MarketingPlan",
@@ -61,6 +74,7 @@ __all__ = [
     "ProductionSchedule",
     "RDPortfolio",
     "RDProject",
+    "ReliabilityEstimate",
     "ResourceCalendar",
     "ScheduleAssignment",
     "SensorRecord",

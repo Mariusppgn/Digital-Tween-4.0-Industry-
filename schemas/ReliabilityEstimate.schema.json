@@ -1,0 +1,85 @@
+{
+  "additionalProperties": false,
+  "description": "Conditional Weibull risk and remaining-useful-life estimate.",
+  "properties": {
+    "assessed_at": {
+      "format": "date-time",
+      "title": "Assessed At",
+      "type": "string"
+    },
+    "confidence": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "failure_probability": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Failure Probability",
+      "type": "number"
+    },
+    "horizon_hours": {
+      "exclusiveMinimum": 0,
+      "maximum": 8760,
+      "title": "Horizon Hours",
+      "type": "number"
+    },
+    "machine_id": {
+      "minLength": 1,
+      "title": "Machine Id",
+      "type": "string"
+    },
+    "method": {
+      "const": "weibull_conditional",
+      "default": "weibull_conditional",
+      "title": "Method",
+      "type": "string"
+    },
+    "operating_age_hours": {
+      "minimum": 0,
+      "title": "Operating Age Hours",
+      "type": "number"
+    },
+    "provenance": {
+      "default": "sylvapapers",
+      "minLength": 1,
+      "title": "Provenance",
+      "type": "string"
+    },
+    "rul_hours": {
+      "minimum": 0,
+      "title": "Rul Hours",
+      "type": "number"
+    },
+    "rul_lower_hours": {
+      "minimum": 0,
+      "title": "Rul Lower Hours",
+      "type": "number"
+    },
+    "rul_upper_hours": {
+      "minimum": 0,
+      "title": "Rul Upper Hours",
+      "type": "number"
+    },
+    "schema_version": {
+      "default": "1.0.0",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "machine_id",
+    "assessed_at",
+    "operating_age_hours",
+    "horizon_hours",
+    "failure_probability",
+    "rul_hours",
+    "rul_lower_hours",
+    "rul_upper_hours",
+    "confidence"
+  ],
+  "title": "ReliabilityEstimate",
+  "type": "object"
+}

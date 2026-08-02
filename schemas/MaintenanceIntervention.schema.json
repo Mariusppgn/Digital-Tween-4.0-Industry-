@@ -1,0 +1,92 @@
+{
+  "additionalProperties": false,
+  "description": "Completed maintenance action exported by Module A.",
+  "properties": {
+    "age_after_hours": {
+      "minimum": 0,
+      "title": "Age After Hours",
+      "type": "number"
+    },
+    "age_before_hours": {
+      "minimum": 0,
+      "title": "Age Before Hours",
+      "type": "number"
+    },
+    "completed_at": {
+      "format": "date-time",
+      "title": "Completed At",
+      "type": "string"
+    },
+    "duration_minutes": {
+      "minimum": 0,
+      "title": "Duration Minutes",
+      "type": "number"
+    },
+    "intervention_id": {
+      "minLength": 1,
+      "title": "Intervention Id",
+      "type": "string"
+    },
+    "machine_id": {
+      "minLength": 1,
+      "title": "Machine Id",
+      "type": "string"
+    },
+    "maintenance_type": {
+      "enum": [
+        "corrective",
+        "preventive",
+        "predictive"
+      ],
+      "title": "Maintenance Type",
+      "type": "string"
+    },
+    "provenance": {
+      "default": "sylvapapers",
+      "minLength": 1,
+      "title": "Provenance",
+      "type": "string"
+    },
+    "recovery_fraction": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Recovery Fraction",
+      "type": "number"
+    },
+    "schema_version": {
+      "default": "1.0.0",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "started_at": {
+      "format": "date-time",
+      "title": "Started At",
+      "type": "string"
+    },
+    "synthetic": {
+      "default": true,
+      "title": "Synthetic",
+      "type": "boolean"
+    },
+    "technician_resource": {
+      "minLength": 1,
+      "title": "Technician Resource",
+      "type": "string"
+    }
+  },
+  "required": [
+    "intervention_id",
+    "machine_id",
+    "maintenance_type",
+    "started_at",
+    "completed_at",
+    "duration_minutes",
+    "age_before_hours",
+    "age_after_hours",
+    "recovery_fraction",
+    "technician_resource"
+  ],
+  "title": "MaintenanceIntervention",
+  "type": "object"
+}

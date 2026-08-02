@@ -44,6 +44,7 @@
           "additionalProperties": {
             "type": "string"
           },
+          "maxProperties": 64,
           "minProperties": 1,
           "title": "Units",
           "type": "object"
@@ -52,6 +53,7 @@
           "additionalProperties": {
             "type": "number"
           },
+          "maxProperties": 64,
           "minProperties": 1,
           "title": "Values",
           "type": "object"
@@ -111,6 +113,7 @@
       "items": {
         "$ref": "#/$defs/SensorRecord"
       },
+      "maxItems": 1000,
       "title": "Sensor Context",
       "type": "array"
     },

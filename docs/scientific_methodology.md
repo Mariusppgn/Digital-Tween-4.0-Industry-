@@ -3,45 +3,82 @@
 ## 1. Positioning
 
 SylvaPapers is a reproducible software experiment, not a calibrated model of a specific paper mill.
-Results test implementation behavior and synthetic hypotheses only.
+Module A tests a synthetic production system; Module B tests interpretable maintenance methods on
+its synthetic evidence.
 
 ## 2. Reproducibility
 
-Every simulation declares schema version, provenance, seed, time horizon, products and orders. Equal
-validated inputs and equal seed must produce equal events and jobs.
+Every run declares schema version, provenance, configuration, seed, horizon and output path. Equal
+validated Module A inputs and seed must reproduce equal events, states and sensors. Module B is
+deterministic for an identical persisted bundle and maintenance configuration.
 
-## 3. Process experiment
+## 3. Module A process experiment
 
 The graph represents serial transformations, alternative pulp recipes and redundant machines. A
-product may declare a route or let the simulator derive it from edge conditions. All enabled routes
-must terminate in accepted rolls or measured losses.
+product may declare a route or let the simulator derive it from edge conditions. Enabled routes
+terminate in accepted rolls or measured losses. Queue and WIP histories expose accumulation, while a
+continuous dry-tonne balance remains outside the baseline.
 
-## 4. Reliability experiment
+## 4. Module A reliability experiment
 
-The common Weibull family changes only shape and scale by machine type. Failure probability is
-conditioned on current operating age and operation duration. Comparative experiments vary one
-coefficient at a time before factorial exploration.
+The common two-parameter Weibull family changes shape and scale by machine type. Failure probability
+is conditioned on operating age and interval duration. Degradation, repair and maintenance recovery
+are explicit synthetic engineering choices. Comparative experiments vary one factor at a time before
+factorial or sensitivity designs.
 
-## 5. Quality and losses
+## 5. Module A instrumentation
 
-Quality outcomes are seeded Bernoulli events in the lightweight model. Rejected rolls are terminal
-losses. No result may count a rejected roll as accepted production.
+State-derived synthetic sensors cover load, temperature, vibration, pressure, power, operating age
+and degradation. Each record has units and a quality label. A sensor series is evidence about the
+simulator's latent state, not evidence that the same relationship exists in a real paper machine.
 
-## 6. KPI
+## 6. Module B anomaly experiment
 
-Primary outputs include accepted quantity, service rate, cycle time, utilization, defect rate,
-material-loss rate, downtime, cost, energy, simplified OEE and delay.
+EWMA weights recent observations while retaining historical context. Robust location and scale reduce
+the influence of isolated extremes, and variable importance explains which channels drive the latest
+score. Validation must use chronological baselines and avoid fitting thresholds on future failures.
 
-## 7. Validation hierarchy
+## 7. Module B reliability and uncertainty
 
-1. validate contracts and references;
-2. validate graph reachability and product activation;
-3. test deterministic events and KPI bounds;
-4. test editor round trips and security boundaries;
-5. compare synthetic results only after the first four levels pass.
+Conditional Weibull risk estimates failure probability between current operating age and the chosen
+horizon. The RUL result is expressed in operating hours and includes an uncertainty interval. Useful
+validation includes temporal discrimination, probability calibration and interval coverage; these
+cannot be claimed from a tiny synthetic demonstration alone.
 
-## 8. Calibration pathway
+## 8. Maintenance policy experiment
 
-Operational use requires approved process histories, censored failure data, maintenance records,
-quality labels, energy metering and material balances. Calibration must preserve a separate synthetic
-baseline for regression testing.
+Corrective, preventive and predictive policies are compared under one explicit synthetic economic
+configuration. The comparison reports expected cost, downtime and intervention probability. It does
+not optimize a real work schedule or prove savings.
+
+## 9. KPI and visual evidence
+
+Module A reports production, service, cycle time, utilization, defects, losses, downtime, cost,
+energy, simplified OEE and delay. Module B reports anomaly, failure risk, RUL, recommendation and
+policy economics. Figures must be regenerated from saved inputs and never substitute for contract or
+numeric validation.
+
+## 10. Validation hierarchy
+
+1. validate contracts, units, references and provenance;
+2. validate graph reachability, product activation and output completeness;
+3. test deterministic Module A events, states, sensors and KPI bounds;
+4. test Module B anomaly, risk, RUL and policy formulas against simple baselines;
+5. test file round trips, malformed-input rejection and bilingual documentation parity;
+6. benchmark `fast`, `standard` and `research` separately;
+7. compare synthetic scenarios only after the previous levels pass;
+8. require approved historical backtesting before any operational interpretation.
+
+## 11. Advanced-method gate
+
+CUSUM, Cox models, isolation forests, state-space models, conformal prediction and lightweight RUL
+learners are candidates, not implemented baseline requirements. An extension must improve a declared
+time-aware metric or economic decision, fit the compute budget, preserve interpretability evidence
+and retain the simple baseline for comparison.
+
+## 12. Calibration pathway
+
+Operational use requires approved process histories, censored failure data, synchronized sensor and
+maintenance records, quality labels, energy metering and material balances. Calibration must preserve
+a separate synthetic baseline for regression testing and document dataset shift, missingness,
+censoring, uncertainty and model-monitoring rules.

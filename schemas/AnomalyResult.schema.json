@@ -1,0 +1,72 @@
+{
+  "additionalProperties": false,
+  "description": "Latest explainable anomaly score for one machine.",
+  "properties": {
+    "assessed_at": {
+      "format": "date-time",
+      "title": "Assessed At",
+      "type": "string"
+    },
+    "is_anomaly": {
+      "title": "Is Anomaly",
+      "type": "boolean"
+    },
+    "machine_id": {
+      "minLength": 1,
+      "title": "Machine Id",
+      "type": "string"
+    },
+    "method": {
+      "const": "ewma_robust",
+      "default": "ewma_robust",
+      "title": "Method",
+      "type": "string"
+    },
+    "observations_used": {
+      "maximum": 10000000,
+      "minimum": 1,
+      "title": "Observations Used",
+      "type": "integer"
+    },
+    "provenance": {
+      "default": "sylvapapers",
+      "minLength": 1,
+      "title": "Provenance",
+      "type": "string"
+    },
+    "schema_version": {
+      "default": "1.0.0",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "score": {
+      "minimum": 0,
+      "title": "Score",
+      "type": "number"
+    },
+    "threshold": {
+      "exclusiveMinimum": 0,
+      "title": "Threshold",
+      "type": "number"
+    },
+    "variable_importance": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "maxProperties": 64,
+      "title": "Variable Importance",
+      "type": "object"
+    }
+  },
+  "required": [
+    "machine_id",
+    "assessed_at",
+    "score",
+    "threshold",
+    "is_anomaly",
+    "observations_used"
+  ],
+  "title": "AnomalyResult",
+  "type": "object"
+}

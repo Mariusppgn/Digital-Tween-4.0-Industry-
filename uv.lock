@@ -16,48 +16,6 @@ wheels = [
 ]
 
 [[package]]
-name = "sylvapapers-digital-twin"
-version = "0.2.0"
-source = { editable = "." }
-dependencies = [
-    { name = "matplotlib" },
-    { name = "networkx" },
-    { name = "pydantic" },
-    { name = "pyyaml" },
-    { name = "simpy" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "mypy" },
-    { name = "pre-commit" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "reportlab" },
-    { name = "ruff" },
-    { name = "types-networkx" },
-    { name = "types-pyyaml" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "matplotlib", specifier = ">=3.8,<4" },
-    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.11,<2" },
-    { name = "networkx", specifier = ">=3.2,<4" },
-    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.8,<5" },
-    { name = "pydantic", specifier = ">=2.8,<3" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3,<9" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5,<7" },
-    { name = "pyyaml", specifier = ">=6.0,<7" },
-    { name = "reportlab", marker = "extra == 'dev'", specifier = ">=4.2,<5" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6,<1" },
-    { name = "simpy", specifier = ">=4.1,<5" },
-    { name = "types-networkx", marker = "extra == 'dev'", specifier = ">=3.2,<4" },
-    { name = "types-pyyaml", marker = "extra == 'dev'", specifier = ">=6.0,<7" },
-]
-provides-extras = ["dev"]
-
-[[package]]
 name = "cfgv"
 version = "3.5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1067,6 +1025,48 @@ sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050, upload-time = "2024-12-04T17:35:26.475Z" },
 ]
+
+[[package]]
+name = "sylvapapers-digital-twin"
+version = "0.3.0"
+source = { editable = "." }
+dependencies = [
+    { name = "matplotlib" },
+    { name = "networkx" },
+    { name = "pydantic" },
+    { name = "pyyaml" },
+    { name = "simpy" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "reportlab" },
+    { name = "ruff" },
+    { name = "types-networkx" },
+    { name = "types-pyyaml" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "matplotlib", specifier = ">=3.8,<4" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.11,<2" },
+    { name = "networkx", specifier = ">=3.2,<4" },
+    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.8,<5" },
+    { name = "pydantic", specifier = ">=2.8,<3" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3,<9" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5,<7" },
+    { name = "pyyaml", specifier = ">=6.0,<7" },
+    { name = "reportlab", marker = "extra == 'dev'", specifier = ">=4.2,<5" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6,<1" },
+    { name = "simpy", specifier = ">=4.1,<5" },
+    { name = "types-networkx", marker = "extra == 'dev'", specifier = ">=3.2,<4" },
+    { name = "types-pyyaml", marker = "extra == 'dev'", specifier = ">=6.0,<7" },
+]
+provides-extras = ["dev"]
 
 [[package]]
 name = "types-networkx"

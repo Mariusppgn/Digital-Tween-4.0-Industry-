@@ -190,6 +190,7 @@
         },
         "quantity": {
           "exclusiveMinimum": 0,
+          "maximum": 100000,
           "title": "Quantity",
           "type": "integer"
         },

@@ -17,6 +17,13 @@
       "title": "Created At",
       "type": "string"
     },
+    "currency": {
+      "default": "EUR",
+      "maxLength": 3,
+      "minLength": 3,
+      "title": "Currency",
+      "type": "string"
+    },
     "due_at": {
       "anyOf": [
         {
@@ -30,10 +37,66 @@
       "default": null,
       "title": "Due At"
     },
+    "expected_cost": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Expected Cost"
+    },
+    "intervention_window_end": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Intervention Window End"
+    },
+    "intervention_window_start": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Intervention Window Start"
+    },
     "machine_id": {
       "minLength": 1,
       "title": "Machine Id",
       "type": "string"
+    },
+    "policy": {
+      "anyOf": [
+        {
+          "enum": [
+            "corrective",
+            "preventive",
+            "predictive"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Policy"
     },
     "provenance": {
       "default": "sylvapapers",
@@ -45,6 +108,7 @@
       "items": {
         "type": "string"
       },
+      "maxItems": 20,
       "title": "Rationale",
       "type": "array"
     },
@@ -68,6 +132,14 @@
       ],
       "title": "Urgency",
       "type": "string"
+    },
+    "variable_importance": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "maxProperties": 64,
+      "title": "Variable Importance",
+      "type": "object"
     }
   },
   "required": [

@@ -2,66 +2,97 @@
 
 ## 1. Purpose
 
-SylvaPapers is a local Python 3.12 monorepo for reproducible paper-mill experiments. The factory
-configuration is the shared source of truth for machines, machine types, materials and graph layout.
+SylvaPapers is a local Python 3.12 monorepo for reproducible paper-mill experiments. Module A
+simulates the factory; Module B analyzes predictive-maintenance evidence. The factory configuration
+and public contracts are their shared source of truth.
 
-## 2. Package boundaries
+## 2. Modular monorepo decision
 
-- `sylvapapers_contracts`: strict Pydantic contracts and JSON Schema export.
-- `sylvapapers_digital_twin`: graph adapter, simulation, reliability, KPI, reporting and web editor.
+The monorepo supports atomic contract, engine, test and documentation changes while the ecosystem is
+young. Separability is preserved through package boundaries, versioned Pydantic models and persisted
+files. A module may consume contracts and files from another module, but it must not import another
+module's private implementation.
 
-The contracts package imports no business package. The twin depends on contracts, NetworkX and
-standard scientific libraries.
+## 3. Package boundaries
 
-## 3. Factory graph
+- `sylvapapers_contracts`: strict data contracts and JSON Schema export.
+- `sylvapapers_digital_twin`: Module A graph, simulation, instrumentation, KPI and reports.
+- predictive-maintenance components: Module B loading, EWMA, Weibull risk, RUL, economics and reports.
+- local web editor: factory configuration editing behind the same `FactoryConfig` boundary.
+
+The contracts package imports no business package. Modules C–E will depend on public contracts and
+persisted outputs rather than simulator internals.
+
+## 4. Factory graph
 
 ```mermaid
 flowchart LR
   Config[FactoryConfig] --> Validate[Contract validation]
   Validate --> Graph[NetworkX process graph]
-  Graph --> Sim[Seeded simulator]
+  Graph --> Sim[Module A seeded simulator]
   Graph --> Editor[Local web editor]
-  Sim --> Events[Events and jobs]
-  Events --> KPI[KPI and reports]
+  Sim --> Ops[Events, jobs, states and sensors]
+  Ops --> KPI[KPI and reports]
+  Ops --> Maint[Module B maintenance analysis]
+  Maint --> Advice[Risk, RUL, recommendations and policy costs]
 ```
 
 Process nodes persist material inputs, outputs and editor coordinates. Edges persist material,
-condition and probability. Cycles are permitted by the generic contract, but the SylvaPapers
-baseline is acyclic and contains no recycling route.
+condition and probability. The SylvaPapers baseline is acyclic and contains no recycling route.
 
-## 4. Series and parallel behavior
+## 5. Series, parallel and state behavior
 
 Parallel capacity is represented by several physical `machine_ids` assigned to one operation.
-Alternative product recipes are represented by conditional graph branches. When a product has no
-explicit routing, the simulator derives a deterministic route using `metadata.route_condition`.
+Alternative product recipes are represented by conditional graph branches. Each physical machine
+maintains its own operating age, availability, degradation, state and sensor history. Queue and WIP
+observations expose accumulation without turning the model into a continuous mass balance.
 
-## 5. Reliability
+## 6. Reliability and instrumentation
 
-Each machine type owns a two-parameter Weibull density. The simulator tracks operating age and
-computes conditional failure probability for the next operation interval. A seeded random generator
-makes the event history reproducible.
+Each machine type owns a two-parameter Weibull density. Module A computes conditional failure risk
+from operating age, advances degradation during work and emits structured states, sensors, failures
+and maintenance events. A seeded random generator makes synthetic histories reproducible.
 
-## 6. Editor boundary
+The public sensor set comprises load, temperature, vibration, pressure, power, operating age and
+degradation. Units and quality labels travel with each record.
 
-The editor server binds to `127.0.0.1` by default, serves only allow-listed assets, validates every
-payload through `FactoryConfig`, limits request size and writes only the configured file. Browser
-changes must be validated before the explicit write action becomes available.
-
-## 7. Data flow
+## 7. Module A to B boundary
 
 ```text
-factory.yaml + simulation_scenario.json
-  -> Pydantic validation
-  -> editable process graph / seeded simulation
-  -> events.csv + jobs.csv + kpis.json + summary.json + figures
+configs + orders
+  -> Module A validation and simulation
+  -> events.csv + jobs.csv + machine_states.csv + sensors.csv
+  -> failures.csv + maintenance.csv + queues.csv + work_in_progress.csv
+  -> Module B input validation
+  -> EWMA + conditional Weibull risk + RUL + economic policy comparison
+  -> maintenance results, recommendations, figures and reproducibility summary
 ```
 
-## 8. Acceptance criteria
+Module B is read-only with respect to Module A outputs. It produces advisory artefacts in a separate
+output directory and never mutates the source simulation bundle.
 
-- a source-to-sink paper route exists for every enabled product;
-- all referenced machines and machine types exist;
+## 8. Editor and security boundary
+
+The editor server binds to `127.0.0.1` by default, serves allow-listed assets, validates payloads
+through `FactoryConfig`, limits request size and writes only the configured file. Browser changes
+must be validated before explicit writing. This local boundary is not an authorization model for
+shared or production deployment.
+
+## 9. Future module integration
+
+- Module B recommendations and windows become constraints for Module C resource allocation.
+- Module C schedules return to Module A as simulation policies for stochastic validation.
+- Module D demand scenarios enter Module A and consume capacity-aware service and cost evidence.
+- Module E consumes bottlenecks, failure risk and costs, then proposes future parameter changes.
+- Every exchange must use versioned contracts with explicit units, provenance and schema version.
+
+## 10. Acceptance criteria
+
+- every enabled product has a valid source-to-sink route;
+- physical machines retain independent age, state and event identity;
+- Module A emits contract-valid operational and condition-monitoring bundles;
+- Module B rejects incomplete inputs and returns traceable machine-level results;
 - every machine type exposes positive Weibull shape and scale;
-- no enabled order targets a disabled product;
-- losses are measured without recycling;
-- editor import/export preserves graph positions and materials;
-- tests, Ruff and strict mypy pass.
+- no rejected roll is counted as accepted production or recycled;
+- equal validated inputs and seed reproduce equal synthetic results;
+- tests, Ruff, strict mypy and bilingual documentation parity pass.

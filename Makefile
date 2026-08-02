@@ -1,4 +1,4 @@
-.PHONY: install validate simulate editor report test lint format typecheck check
+.PHONY: install validate simulate maintenance editor report test lint format typecheck check
 
 install:
 	uv sync --extra dev
@@ -8,6 +8,9 @@ validate:
 
 simulate:
 	uv run sylvapapers simulate --config configs/scenarios/baseline.yaml --output outputs/baseline
+
+maintenance: simulate
+	uv run sylvapapers maintenance --input outputs/baseline --output outputs/maintenance
 
 editor:
 	uv run sylvapapers factory-editor --factory configs/factory.yaml

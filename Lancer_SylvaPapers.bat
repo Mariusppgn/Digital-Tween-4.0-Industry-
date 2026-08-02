@@ -2,13 +2,18 @@
 setlocal EnableExtensions
 cd /d "%~dp0"
 
-set "PYTHON_EXE=%CD%\.venv\Scripts\python.exe"
+set "RUNTIME_DIR=%CD%\.venv_sylvapapers"
+set "PYTHON_EXE=%RUNTIME_DIR%\Scripts\python.exe"
 set "FACTORY_CONFIG=%CD%\configs\factory.yaml"
 set "EDITOR_URL=http://127.0.0.1:8766/"
 set "UV_EXE="
+set "UV_PROJECT_ENVIRONMENT=%RUNTIME_DIR%"
+set "PYTHONNOUSERSITE=1"
+set "PYTHONPATH="
+set "PYTHONHOME="
 
 if exist "%PYTHON_EXE%" (
-  "%PYTHON_EXE%" -c "import sys; from importlib.metadata import version; import sylvapapers_contracts, sylvapapers_digital_twin; raise SystemExit(0 if sys.version_info >= (3, 12) and version('sylvapapers-digital-twin') == '0.2.0' else 1)" >nul 2>&1
+  "%PYTHON_EXE%" -c "import sys, yaml; from importlib.metadata import version; from pydantic import BaseModel; import matplotlib, networkx, simpy, sylvapapers_contracts, sylvapapers_digital_twin; assert callable(yaml.safe_load); raise SystemExit(0 if sys.version_info >= (3, 12) and version('sylvapapers-digital-twin') == '0.3.0' else 1)" >nul 2>&1
   if not errorlevel 1 goto validate
 )
 
@@ -17,9 +22,16 @@ if not defined UV_EXE if exist "%USERPROFILE%\.local\bin\uv.exe" set "UV_EXE=%US
 if not defined UV_EXE goto missing_uv
 
 echo Installation ou mise a jour de l'environnement SylvaPapers...
-"%UV_EXE%" sync --frozen --extra dev
+if exist "%RUNTIME_DIR%" (
+  "%UV_EXE%" sync --frozen --extra dev --reinstall
+) else (
+  "%UV_EXE%" sync --frozen --extra dev
+)
 if errorlevel 1 goto install_failed
 if not exist "%PYTHON_EXE%" goto install_failed
+
+"%PYTHON_EXE%" -c "import yaml; from pydantic import BaseModel; import sylvapapers_contracts, sylvapapers_digital_twin; assert callable(yaml.safe_load)" >nul 2>&1
+if errorlevel 1 goto install_failed
 
 :validate
 "%PYTHON_EXE%" -m sylvapapers_digital_twin validate-config --config "%CD%\configs\scenarios\baseline.yaml" >nul

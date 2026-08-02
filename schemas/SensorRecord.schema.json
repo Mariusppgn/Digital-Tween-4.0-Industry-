@@ -42,6 +42,7 @@
       "additionalProperties": {
         "type": "string"
       },
+      "maxProperties": 64,
       "minProperties": 1,
       "title": "Units",
       "type": "object"
@@ -50,6 +51,7 @@
       "additionalProperties": {
         "type": "number"
       },
+      "maxProperties": 64,
       "minProperties": 1,
       "title": "Values",
       "type": "object"

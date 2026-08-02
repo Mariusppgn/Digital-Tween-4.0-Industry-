@@ -73,8 +73,7 @@ def build_process_graph(factory: Any) -> nx.DiGraph[str]:
                 attributes = {
                     str(key): plain(value)
                     for key, value in edge.items()
-                    if key
-                    not in {"source", "target", "from_node", "to_node", "from", "to"}
+                    if key not in {"source", "target", "from_node", "to_node", "from", "to"}
                 }
             else:
                 source, target = list(edge)[:2]

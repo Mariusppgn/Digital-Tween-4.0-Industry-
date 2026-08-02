@@ -1,0 +1,215 @@
+{
+  "$defs": {
+    "FailureDensityConfig": {
+      "additionalProperties": false,
+      "description": "Weibull time-to-failure density shared by one machine type.\n\nThe two coefficients describe the density in operating hours. Reference\nconfigurations use synthetic hypotheses until observations are available\nfor calibration.",
+      "properties": {
+        "family": {
+          "const": "weibull",
+          "default": "weibull",
+          "title": "Family",
+          "type": "string"
+        },
+        "provenance": {
+          "default": "sylvapapers",
+          "minLength": 1,
+          "title": "Provenance",
+          "type": "string"
+        },
+        "scale_hours": {
+          "exclusiveMinimum": 0,
+          "title": "Scale Hours",
+          "type": "number"
+        },
+        "schema_version": {
+          "default": "1.0.0",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "shape": {
+          "exclusiveMinimum": 0,
+          "title": "Shape",
+          "type": "number"
+        }
+      },
+      "required": [
+        "shape",
+        "scale_hours"
+      ],
+      "title": "FailureDensityConfig",
+      "type": "object"
+    },
+    "MaintenanceEconomicConfig": {
+      "additionalProperties": false,
+      "description": "Synthetic or calibrated cost assumptions used to compare policies.",
+      "properties": {
+        "assumptions_are_synthetic": {
+          "default": true,
+          "title": "Assumptions Are Synthetic",
+          "type": "boolean"
+        },
+        "corrective_downtime_hours": {
+          "default": 12,
+          "minimum": 0,
+          "title": "Corrective Downtime Hours",
+          "type": "number"
+        },
+        "corrective_intervention_cost": {
+          "default": 8000,
+          "minimum": 0,
+          "title": "Corrective Intervention Cost",
+          "type": "number"
+        },
+        "currency": {
+          "default": "EUR",
+          "maxLength": 3,
+          "minLength": 3,
+          "title": "Currency",
+          "type": "string"
+        },
+        "downtime_cost_per_hour": {
+          "default": 1500,
+          "minimum": 0,
+          "title": "Downtime Cost Per Hour",
+          "type": "number"
+        },
+        "planned_downtime_hours": {
+          "default": 4,
+          "minimum": 0,
+          "title": "Planned Downtime Hours",
+          "type": "number"
+        },
+        "predictive_effectiveness": {
+          "default": 0.75,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Predictive Effectiveness",
+          "type": "number"
+        },
+        "predictive_intervention_cost": {
+          "default": 3000,
+          "minimum": 0,
+          "title": "Predictive Intervention Cost",
+          "type": "number"
+        },
+        "preventive_age_recovery": {
+          "default": 0.9,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Preventive Age Recovery",
+          "type": "number"
+        },
+        "preventive_intervention_cost": {
+          "default": 2500,
+          "minimum": 0,
+          "title": "Preventive Intervention Cost",
+          "type": "number"
+        },
+        "provenance": {
+          "default": "sylvapapers",
+          "minLength": 1,
+          "title": "Provenance",
+          "type": "string"
+        },
+        "schema_version": {
+          "default": "1.0.0",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "title": "MaintenanceEconomicConfig",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Fast, interpretable baseline settings for predictive maintenance.",
+  "properties": {
+    "confidence_level": {
+      "default": 0.8,
+      "exclusiveMaximum": 1,
+      "exclusiveMinimum": 0,
+      "title": "Confidence Level",
+      "type": "number"
+    },
+    "criticality": {
+      "default": 1,
+      "exclusiveMinimum": 0,
+      "maximum": 10,
+      "title": "Criticality",
+      "type": "number"
+    },
+    "default_failure_density": {
+      "$ref": "#/$defs/FailureDensityConfig"
+    },
+    "economics": {
+      "$ref": "#/$defs/MaintenanceEconomicConfig"
+    },
+    "ewma_alpha": {
+      "default": 0.3,
+      "exclusiveMinimum": 0,
+      "maximum": 1,
+      "title": "Ewma Alpha",
+      "type": "number"
+    },
+    "excluded_machine_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 10000,
+      "title": "Excluded Machine Ids",
+      "type": "array"
+    },
+    "horizon_hours": {
+      "default": 72,
+      "exclusiveMinimum": 0,
+      "maximum": 8760,
+      "title": "Horizon Hours",
+      "type": "number"
+    },
+    "machine_failure_densities": {
+      "additionalProperties": {
+        "$ref": "#/$defs/FailureDensityConfig"
+      },
+      "maxProperties": 10000,
+      "title": "Machine Failure Densities",
+      "type": "object"
+    },
+    "minimum_baseline_points": {
+      "default": 5,
+      "maximum": 10000,
+      "minimum": 3,
+      "title": "Minimum Baseline Points",
+      "type": "integer"
+    },
+    "predictive_risk_threshold": {
+      "default": 0.25,
+      "exclusiveMinimum": 0,
+      "maximum": 1,
+      "title": "Predictive Risk Threshold",
+      "type": "number"
+    },
+    "provenance": {
+      "default": "sylvapapers",
+      "minLength": 1,
+      "title": "Provenance",
+      "type": "string"
+    },
+    "robust_z_threshold": {
+      "default": 3.5,
+      "exclusiveMinimum": 0,
+      "maximum": 100,
+      "title": "Robust Z Threshold",
+      "type": "number"
+    },
+    "schema_version": {
+      "default": "1.0.0",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "title": "MaintenanceAnalysisConfig",
+  "type": "object"
+}

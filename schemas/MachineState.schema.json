@@ -32,6 +32,19 @@
       "title": "Machine Id",
       "type": "string"
     },
+    "operating_age_hours": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Operating Age Hours"
+    },
     "provenance": {
       "default": "sylvapapers",
       "minLength": 1,

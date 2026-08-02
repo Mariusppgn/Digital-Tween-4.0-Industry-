@@ -1,0 +1,2 @@
+intervention_id,machine_id,time_minutes,completed_at_minutes,maintenance_type,duration_minutes,age_before_hours,age_after_hours,recovery_fraction,technician_resource,synthetic
+maintenance-001,dryer-01,0,30,preventive,30,700,100,0.857142857,maintenance-team,true

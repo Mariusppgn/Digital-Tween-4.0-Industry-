@@ -13,6 +13,7 @@ PAIRS = [
     ("industrial_assumptions.md", "industrial_assumptions_FR.md"),
     ("compute_budget.md", "compute_budget_FR.md"),
     ("module_catalog.md", "module_catalog_FR.md"),
+    ("modules_a_b.md", "modules_a_b_FR.md"),
 ]
 
 

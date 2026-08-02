@@ -1,0 +1,49 @@
+schema_version: 1.0.0
+provenance: synthetic_example
+horizon_hours: 72
+ewma_alpha: 0.3
+robust_z_threshold: 3.5
+minimum_baseline_points: 5
+confidence_level: 0.8
+predictive_risk_threshold: 0.25
+criticality: 1.0
+excluded_machine_ids:
+  - chips-buffer
+default_failure_density:
+  family: weibull
+  shape: 2.0
+  scale_hours: 1000.0
+  provenance: synthetic_example
+machine_failure_densities:
+  dryer-01:
+    family: weibull
+    shape: 2.4
+    scale_hours: 850.0
+    provenance: synthetic_example
+  dryer-02:
+    family: weibull
+    shape: 2.4
+    scale_hours: 850.0
+    provenance: synthetic_example
+  winder-01:
+    family: weibull
+    shape: 2.1
+    scale_hours: 1200.0
+    provenance: synthetic_example
+  winder-02:
+    family: weibull
+    shape: 2.1
+    scale_hours: 1200.0
+    provenance: synthetic_example
+economics:
+  currency: EUR
+  corrective_intervention_cost: 8000.0
+  preventive_intervention_cost: 2500.0
+  predictive_intervention_cost: 3000.0
+  downtime_cost_per_hour: 1500.0
+  corrective_downtime_hours: 12.0
+  planned_downtime_hours: 4.0
+  predictive_effectiveness: 0.75
+  preventive_age_recovery: 0.9
+  assumptions_are_synthetic: true
+  provenance: synthetic_example

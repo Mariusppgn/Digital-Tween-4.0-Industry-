@@ -14,7 +14,11 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 class ContractModel(BaseModel):
     """Strict, serialisable base for all public contracts."""
 
-    model_config = ConfigDict(extra="forbid", validate_assignment=True)
+    model_config = ConfigDict(
+        extra="forbid",
+        validate_assignment=True,
+        allow_inf_nan=False,
+    )
 
     schema_version: str = Field(default="1.0.0", pattern=r"^\d+\.\d+\.\d+$")
     provenance: str = Field(default="sylvapapers", min_length=1)
@@ -201,7 +205,7 @@ class ProductDefinition(ContractModel):
 class ProductionOrder(ContractModel):
     order_id: str = Field(min_length=1)
     product_id: str = Field(min_length=1)
-    quantity: int = Field(gt=0)
+    quantity: int = Field(gt=0, le=100_000)
     quantity_unit: str = Field(default="roll", min_length=1)
     release_at: datetime
     due_at: datetime
@@ -273,14 +277,15 @@ class MachineState(ContractModel):
     active_order_id: str | None = None
     utilisation: float = Field(default=0, ge=0, le=1)
     remaining_minutes: float | None = Field(default=None, ge=0)
+    operating_age_hours: float | None = Field(default=None, ge=0)
 
 
 class SensorRecord(ContractModel):
     sensor_id: str = Field(min_length=1)
     machine_id: str = Field(min_length=1)
     timestamp: datetime
-    values: dict[str, float] = Field(min_length=1)
-    units: dict[str, str] = Field(min_length=1)
+    values: dict[str, float] = Field(min_length=1, max_length=64)
+    units: dict[str, str] = Field(min_length=1, max_length=64)
     quality: Literal["good", "uncertain", "bad"] = "good"
 
     @model_validator(mode="after")
@@ -297,7 +302,119 @@ class FailureEvent(ContractModel):
     failure_mode: str = Field(min_length=1)
     severity: int = Field(ge=1, le=5)
     downtime_minutes: float = Field(ge=0)
-    sensor_context: list[SensorRecord] = Field(default_factory=list)
+    sensor_context: list[SensorRecord] = Field(default_factory=list, max_length=1_000)
+
+
+class MaintenanceEconomicConfig(ContractModel):
+    """Synthetic or calibrated cost assumptions used to compare policies."""
+
+    currency: str = Field(default="EUR", min_length=3, max_length=3)
+    corrective_intervention_cost: float = Field(default=8_000, ge=0)
+    preventive_intervention_cost: float = Field(default=2_500, ge=0)
+    predictive_intervention_cost: float = Field(default=3_000, ge=0)
+    downtime_cost_per_hour: float = Field(default=1_500, ge=0)
+    corrective_downtime_hours: float = Field(default=12, ge=0)
+    planned_downtime_hours: float = Field(default=4, ge=0)
+    predictive_effectiveness: float = Field(default=0.75, ge=0, le=1)
+    preventive_age_recovery: float = Field(default=0.9, ge=0, le=1)
+    assumptions_are_synthetic: bool = True
+
+
+class MaintenanceAnalysisConfig(ContractModel):
+    """Fast, interpretable baseline settings for predictive maintenance."""
+
+    horizon_hours: float = Field(default=72, gt=0, le=8_760)
+    ewma_alpha: float = Field(default=0.3, gt=0, le=1)
+    robust_z_threshold: float = Field(default=3.5, gt=0, le=100)
+    minimum_baseline_points: int = Field(default=5, ge=3, le=10_000)
+    confidence_level: float = Field(default=0.8, gt=0, lt=1)
+    predictive_risk_threshold: float = Field(default=0.25, gt=0, le=1)
+    criticality: float = Field(default=1, gt=0, le=10)
+    default_failure_density: FailureDensityConfig = Field(
+        default_factory=lambda: FailureDensityConfig(shape=2, scale_hours=1_000)
+    )
+    machine_failure_densities: dict[str, FailureDensityConfig] = Field(
+        default_factory=dict,
+        max_length=10_000,
+    )
+    excluded_machine_ids: list[str] = Field(default_factory=list, max_length=10_000)
+    economics: MaintenanceEconomicConfig = Field(default_factory=MaintenanceEconomicConfig)
+
+
+class AnomalyResult(ContractModel):
+    """Latest explainable anomaly score for one machine."""
+
+    machine_id: str = Field(min_length=1)
+    assessed_at: datetime
+    method: Literal["ewma_robust"] = "ewma_robust"
+    score: float = Field(ge=0)
+    threshold: float = Field(gt=0)
+    is_anomaly: bool
+    observations_used: int = Field(ge=1, le=10_000_000)
+    variable_importance: dict[str, float] = Field(default_factory=dict, max_length=64)
+
+    @model_validator(mode="after")
+    def validate_importance(self) -> AnomalyResult:
+        if any(value < 0 or value > 1 for value in self.variable_importance.values()):
+            raise ValueError("variable importance values must be between 0 and 1")
+        return self
+
+
+class ReliabilityEstimate(ContractModel):
+    """Conditional Weibull risk and remaining-useful-life estimate."""
+
+    machine_id: str = Field(min_length=1)
+    assessed_at: datetime
+    method: Literal["weibull_conditional"] = "weibull_conditional"
+    operating_age_hours: float = Field(ge=0)
+    horizon_hours: float = Field(gt=0, le=8_760)
+    failure_probability: float = Field(ge=0, le=1)
+    rul_hours: float = Field(ge=0)
+    rul_lower_hours: float = Field(ge=0)
+    rul_upper_hours: float = Field(ge=0)
+    confidence: float = Field(ge=0, le=1)
+
+    @model_validator(mode="after")
+    def validate_rul_interval(self) -> ReliabilityEstimate:
+        if not self.rul_lower_hours <= self.rul_hours <= self.rul_upper_hours:
+            raise ValueError("RUL interval must contain rul_hours")
+        return self
+
+
+class MaintenancePolicyCost(ContractModel):
+    """Expected cost and downtime for one maintenance policy."""
+
+    policy: Literal["corrective", "preventive", "predictive"]
+    expected_cost: float = Field(ge=0)
+    currency: str = Field(default="EUR", min_length=3, max_length=3)
+    expected_downtime_hours: float = Field(ge=0)
+    intervention_probability: float = Field(ge=0, le=1)
+    assumptions_are_synthetic: bool = True
+    rationale: list[str] = Field(default_factory=list, max_length=20)
+
+
+class MaintenanceIntervention(ContractModel):
+    """Completed maintenance action exported by Module A."""
+
+    intervention_id: str = Field(min_length=1)
+    machine_id: str = Field(min_length=1)
+    maintenance_type: Literal["corrective", "preventive", "predictive"]
+    started_at: datetime
+    completed_at: datetime
+    duration_minutes: float = Field(ge=0)
+    age_before_hours: float = Field(ge=0)
+    age_after_hours: float = Field(ge=0)
+    recovery_fraction: float = Field(ge=0, le=1)
+    technician_resource: str = Field(min_length=1)
+    synthetic: bool = True
+
+    @model_validator(mode="after")
+    def validate_intervention(self) -> MaintenanceIntervention:
+        if self.completed_at < self.started_at:
+            raise ValueError("maintenance completion cannot precede its start")
+        if self.age_after_hours > self.age_before_hours:
+            raise ValueError("maintenance cannot increase operating age")
+        return self
 
 
 class MaintenanceRecommendation(ContractModel):
@@ -308,7 +425,55 @@ class MaintenanceRecommendation(ContractModel):
     urgency: Literal["low", "medium", "high", "critical"]
     confidence: float = Field(ge=0, le=1)
     due_at: datetime | None = None
-    rationale: list[str] = Field(default_factory=list)
+    policy: Literal["corrective", "preventive", "predictive"] | None = None
+    intervention_window_start: datetime | None = None
+    intervention_window_end: datetime | None = None
+    variable_importance: dict[str, float] = Field(default_factory=dict, max_length=64)
+    expected_cost: float | None = Field(default=None, ge=0)
+    currency: str = Field(default="EUR", min_length=3, max_length=3)
+    rationale: list[str] = Field(default_factory=list, max_length=20)
+
+    @model_validator(mode="after")
+    def validate_intervention_window(self) -> MaintenanceRecommendation:
+        start = self.intervention_window_start
+        end = self.intervention_window_end
+        if (start is None) != (end is None):
+            raise ValueError("both intervention window bounds must be supplied together")
+        if start is not None and end is not None and end <= start:
+            raise ValueError("intervention window end must be later than its start")
+        if any(value < 0 or value > 1 for value in self.variable_importance.values()):
+            raise ValueError("variable importance values must be between 0 and 1")
+        return self
+
+
+class MaintenanceAssessment(ContractModel):
+    """Decision-ready Module B output for one machine."""
+
+    assessment_id: str = Field(min_length=1)
+    machine_id: str = Field(min_length=1)
+    created_at: datetime
+    anomaly: AnomalyResult
+    reliability: ReliabilityEstimate
+    recommendation: MaintenanceRecommendation
+    policy_comparison: list[MaintenancePolicyCost] = Field(min_length=3, max_length=3)
+    data_provenance: Literal["module_a", "external", "synthetic_example"]
+
+    @model_validator(mode="after")
+    def validate_consistency(self) -> MaintenanceAssessment:
+        machine_ids = {
+            self.machine_id,
+            self.anomaly.machine_id,
+            self.reliability.machine_id,
+            self.recommendation.machine_id,
+        }
+        if len(machine_ids) != 1:
+            raise ValueError("maintenance assessment machine ids must match")
+        policies = [item.policy for item in self.policy_comparison]
+        if set(policies) != {"corrective", "preventive", "predictive"}:
+            raise ValueError("policy comparison must contain each maintenance policy once")
+        if len(policies) != len(set(policies)):
+            raise ValueError("maintenance policies must be unique")
+        return self
 
 
 class ScheduleAssignment(ContractModel):

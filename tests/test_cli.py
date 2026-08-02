@@ -1,7 +1,10 @@
 import json
+from pathlib import Path
 
 from sylvapapers_digital_twin.cli import build_parser, main
 from test_simulation import factory_config, scenario_config
+
+ROOT = Path(__file__).parents[1]
 
 
 def test_validate_simulate_and_report_commands(tmp_path, capsys):
@@ -37,3 +40,30 @@ def test_factory_editor_command_has_local_safe_defaults() -> None:
     assert args.factory == "configs/factory.yaml"
     assert args.host == "127.0.0.1"
     assert args.port == 8765
+
+
+def test_maintenance_command_consumes_module_a_contract_bundle(tmp_path, capsys) -> None:
+    output = tmp_path / "maintenance"
+
+    assert (
+        main(
+            [
+                "maintenance",
+                "--input",
+                str(ROOT / "data" / "examples" / "maintenance"),
+                "--config",
+                str(ROOT / "configs" / "maintenance" / "baseline.yaml"),
+                "--output",
+                str(output),
+            ]
+        )
+        == 0
+    )
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["machines_assessed"] == 1
+    assert payload["recommendations"]["dryer-01"]["policy"] in {
+        "corrective",
+        "preventive",
+        "predictive",
+    }
+    assert (output / "maintenance_assessments.json").is_file()

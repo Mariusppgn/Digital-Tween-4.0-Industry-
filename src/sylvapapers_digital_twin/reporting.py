@@ -15,13 +15,27 @@ from .kpi import calculate_kpis
 from .simulator import SimulationResult
 
 
-def _csv(path: Path, rows: list[dict[str, Any]]) -> None:
+def _csv(
+    path: Path,
+    rows: list[dict[str, Any]],
+    fields: list[str] | None = None,
+) -> None:
     """Write heterogeneous event dictionaries as a rectangular UTF-8 CSV file."""
-    fields = sorted({key for row in rows for key in row})
+    fieldnames = fields or sorted({key for row in rows for key in row})
     with path.open("w", encoding="utf-8", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=fields)
+        writer = csv.DictWriter(stream, fieldnames=fieldnames)
         writer.writeheader()
-        writer.writerows(rows)
+        writer.writerows(
+            {
+                key: (
+                    f"'{value}"
+                    if isinstance(value, str) and value.startswith(("=", "+", "-", "@"))
+                    else value
+                )
+                for key, value in row.items()
+            }
+            for row in rows
+        )
 
 
 def save_result(
@@ -41,6 +55,117 @@ def save_result(
     }
     _csv(paths["events"], result.events)
     _csv(paths["jobs"], result.jobs)
+    # Stable A-to-B exchange tables are always persisted. They intentionally
+    # remain outside ``paths`` to preserve the original public return contract.
+    detailed_tables: dict[str, tuple[list[dict[str, Any]], list[str]]] = {
+        "machine_states.csv": (
+            result.machine_states,
+            [
+                "machine_id",
+                "process_node_id",
+                "instance_index",
+                "time_minutes",
+                "timestamp",
+                "status",
+                "job_id",
+                "operating_age_hours",
+                "remaining_minutes",
+                "utilisation",
+            ],
+        ),
+        "sensors.csv": (
+            result.sensor_records,
+            [
+                "sensor_id",
+                "machine_id",
+                "process_node_id",
+                "time_minutes",
+                "timestamp",
+                "job_id",
+                "quality",
+                "load_ratio",
+                "temperature_c",
+                "vibration_mm_s",
+                "pressure_bar",
+                "power_kw",
+                "operating_age_hours",
+                "degradation_index",
+                "failure_probability",
+                "synthetic",
+            ],
+        ),
+        "failures.csv": (
+            result.failure_events,
+            [
+                "failure_id",
+                "machine_id",
+                "process_node_id",
+                "time_minutes",
+                "timestamp",
+                "job_id",
+                "failure_mode",
+                "severity",
+                "downtime_minutes",
+                "failure_probability",
+                "operating_age_hours",
+                "synthetic",
+            ],
+        ),
+        "maintenance.csv": (
+            result.maintenance_interventions,
+            [
+                "intervention_id",
+                "machine_id",
+                "process_node_id",
+                "time_minutes",
+                "timestamp",
+                "completed_at_minutes",
+                "completed_at",
+                "job_id",
+                "maintenance_type",
+                "duration_minutes",
+                "age_before_hours",
+                "age_after_hours",
+                "recovery_fraction",
+                "technician_resource",
+                "synthetic",
+            ],
+        ),
+        "queues.csv": (
+            result.queue_history,
+            [
+                "machine_id",
+                "time_minutes",
+                "timestamp",
+                "job_id",
+                "arrival_minutes",
+                "service_start_minutes",
+                "wait_minutes",
+                "queue_length",
+                "buffer_capacity",
+                "buffer_index",
+            ],
+        ),
+        "work_in_progress.csv": (
+            result.work_in_progress,
+            [
+                "time_minutes",
+                "timestamp",
+                "job_id",
+                "product_id",
+                "process_node_id",
+                "status",
+                "wip_delta",
+                "total_wip",
+            ],
+        ),
+    }
+    for filename, (rows, fields) in detailed_tables.items():
+        _csv(output / filename, rows, fields)
+    (output / "final_state.json").write_text(
+        json.dumps(result.final_state, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
     paths["kpis"].write_text(
         json.dumps(kpis, indent=2, ensure_ascii=False),
         encoding="utf-8",
@@ -52,6 +177,12 @@ def save_result(
         "runtime_seconds": result.runtime_seconds,
         "event_count": len(result.events),
         "job_count": len(result.jobs),
+        "machine_state_count": len(result.machine_states),
+        "sensor_record_count": len(result.sensor_records),
+        "failure_count": len(result.failure_events),
+        "maintenance_intervention_count": len(result.maintenance_interventions),
+        "queue_record_count": len(result.queue_history),
+        "wip_record_count": len(result.work_in_progress),
         "machines": list(result.graph.nodes),
         "metadata": result.metadata,
         "environment": {
@@ -60,6 +191,7 @@ def save_result(
         },
         "output_directory": str(output.resolve()),
         "kpis": kpis,
+        "detailed_outputs": [*detailed_tables, "final_state.json"],
     }
     paths["summary"].write_text(
         json.dumps(summary, indent=2, ensure_ascii=False),
@@ -137,6 +269,62 @@ def generate_plots(
     paths["kpi_plot"] = output / "kpis.png"
     figure.tight_layout()
     figure.savefig(paths["kpi_plot"], dpi=140)
+    plt.close(figure)
+
+    operations = [event for event in result.events if event["event_type"] == "operation_end"]
+    figure, axes = plt.subplots(figsize=(10, max(4, len(result.graph.nodes) * 0.3)))
+    machine_order = {machine: index for index, machine in enumerate(result.graph.nodes)}
+    for event in operations:
+        machine = str(event["machine_id"])
+        axes.barh(
+            machine_order[machine],
+            float(event["duration"]),
+            left=float(event["started_at"]),
+            height=0.65,
+            alpha=0.8,
+        )
+    axes.set_yticks(list(machine_order.values()), labels=list(machine_order))
+    axes.set(title="Gantt des machines", xlabel="Temps simulé (min)")
+    axes.grid(axis="x", alpha=0.25)
+    paths["machine_gantt"] = output / "machine_gantt.png"
+    figure.tight_layout()
+    figure.savefig(paths["machine_gantt"], dpi=140)
+    plt.close(figure)
+
+    figure, axes = plt.subplots(figsize=(8, 4))
+    by_machine: dict[str, list[dict[str, Any]]] = {}
+    for row in result.queue_history:
+        by_machine.setdefault(str(row["machine_id"]), []).append(row)
+    for machine, rows in by_machine.items():
+        if any(float(row["wait_minutes"]) > 0 for row in rows):
+            axes.step(
+                [float(row["time_minutes"]) for row in rows],
+                [int(row["queue_length"]) for row in rows],
+                where="post",
+                label=machine,
+            )
+    axes.set(title="Évolution des files d’attente", xlabel="Temps simulé (min)", ylabel="Jobs")
+    if axes.lines:
+        axes.legend(fontsize=7, ncol=2)
+    axes.grid(alpha=0.25)
+    paths["queue_history"] = output / "queue_history.png"
+    figure.tight_layout()
+    figure.savefig(paths["queue_history"], dpi=140)
+    plt.close(figure)
+
+    energy_by_machine: dict[str, float] = {}
+    for event in operations:
+        machine = str(event["machine_id"])
+        energy_by_machine[machine] = energy_by_machine.get(machine, 0.0) + float(
+            event.get("energy", 0)
+        )
+    figure, axes = plt.subplots(figsize=(9, 4))
+    axes.bar(list(energy_by_machine), list(energy_by_machine.values()))
+    axes.set(title="Énergie par étape", ylabel="kWh")
+    axes.tick_params(axis="x", rotation=30)
+    paths["energy_by_machine"] = output / "energy_by_machine.png"
+    figure.tight_layout()
+    figure.savefig(paths["energy_by_machine"], dpi=140)
     plt.close(figure)
     return paths
 

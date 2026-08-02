@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sylvapapers-digital-twin"
-version = "0.2.0"
+version = "0.3.0"
 description = "A configurable paper-mill digital twin with visual process editing and Weibull reliability."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -76,6 +76,6 @@ indent-style = "space"
 [tool.mypy]
 python_version = "3.12"
 strict = true
-packages = ["sylvapapers_contracts", "sylvapapers_digital_twin"]
+packages = ["sylvapapers_contracts", "sylvapapers_digital_twin", "sylvapapers_maintenance"]
 mypy_path = "src"
 warn_unused_ignores = true

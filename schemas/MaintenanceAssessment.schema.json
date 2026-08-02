@@ -1,0 +1,457 @@
+{
+  "$defs": {
+    "AnomalyResult": {
+      "additionalProperties": false,
+      "description": "Latest explainable anomaly score for one machine.",
+      "properties": {
+        "assessed_at": {
+          "format": "date-time",
+          "title": "Assessed At",
+          "type": "string"
+        },
+        "is_anomaly": {
+          "title": "Is Anomaly",
+          "type": "boolean"
+        },
+        "machine_id": {
+          "minLength": 1,
+          "title": "Machine Id",
+          "type": "string"
+        },
+        "method": {
+          "const": "ewma_robust",
+          "default": "ewma_robust",
+          "title": "Method",
+          "type": "string"
+        },
+        "observations_used": {
+          "maximum": 10000000,
+          "minimum": 1,
+          "title": "Observations Used",
+          "type": "integer"
+        },
+        "provenance": {
+          "default": "sylvapapers",
+          "minLength": 1,
+          "title": "Provenance",
+          "type": "string"
+        },
+        "schema_version": {
+          "default": "1.0.0",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "score": {
+          "minimum": 0,
+          "title": "Score",
+          "type": "number"
+        },
+        "threshold": {
+          "exclusiveMinimum": 0,
+          "title": "Threshold",
+          "type": "number"
+        },
+        "variable_importance": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "maxProperties": 64,
+          "title": "Variable Importance",
+          "type": "object"
+        }
+      },
+      "required": [
+        "machine_id",
+        "assessed_at",
+        "score",
+        "threshold",
+        "is_anomaly",
+        "observations_used"
+      ],
+      "title": "AnomalyResult",
+      "type": "object"
+    },
+    "MaintenancePolicyCost": {
+      "additionalProperties": false,
+      "description": "Expected cost and downtime for one maintenance policy.",
+      "properties": {
+        "assumptions_are_synthetic": {
+          "default": true,
+          "title": "Assumptions Are Synthetic",
+          "type": "boolean"
+        },
+        "currency": {
+          "default": "EUR",
+          "maxLength": 3,
+          "minLength": 3,
+          "title": "Currency",
+          "type": "string"
+        },
+        "expected_cost": {
+          "minimum": 0,
+          "title": "Expected Cost",
+          "type": "number"
+        },
+        "expected_downtime_hours": {
+          "minimum": 0,
+          "title": "Expected Downtime Hours",
+          "type": "number"
+        },
+        "intervention_probability": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Intervention Probability",
+          "type": "number"
+        },
+        "policy": {
+          "enum": [
+            "corrective",
+            "preventive",
+            "predictive"
+          ],
+          "title": "Policy",
+          "type": "string"
+        },
+        "provenance": {
+          "default": "sylvapapers",
+          "minLength": 1,
+          "title": "Provenance",
+          "type": "string"
+        },
+        "rationale": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "title": "Rationale",
+          "type": "array"
+        },
+        "schema_version": {
+          "default": "1.0.0",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "policy",
+        "expected_cost",
+        "expected_downtime_hours",
+        "intervention_probability"
+      ],
+      "title": "MaintenancePolicyCost",
+      "type": "object"
+    },
+    "MaintenanceRecommendation": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "minLength": 1,
+          "title": "Action",
+          "type": "string"
+        },
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "currency": {
+          "default": "EUR",
+          "maxLength": 3,
+          "minLength": 3,
+          "title": "Currency",
+          "type": "string"
+        },
+        "due_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Due At"
+        },
+        "expected_cost": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expected Cost"
+        },
+        "intervention_window_end": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Intervention Window End"
+        },
+        "intervention_window_start": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Intervention Window Start"
+        },
+        "machine_id": {
+          "minLength": 1,
+          "title": "Machine Id",
+          "type": "string"
+        },
+        "policy": {
+          "anyOf": [
+            {
+              "enum": [
+                "corrective",
+                "preventive",
+                "predictive"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Policy"
+        },
+        "provenance": {
+          "default": "sylvapapers",
+          "minLength": 1,
+          "title": "Provenance",
+          "type": "string"
+        },
+        "rationale": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "title": "Rationale",
+          "type": "array"
+        },
+        "recommendation_id": {
+          "minLength": 1,
+          "title": "Recommendation Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "default": "1.0.0",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "urgency": {
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ],
+          "title": "Urgency",
+          "type": "string"
+        },
+        "variable_importance": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "maxProperties": 64,
+          "title": "Variable Importance",
+          "type": "object"
+        }
+      },
+      "required": [
+        "recommendation_id",
+        "machine_id",
+        "created_at",
+        "action",
+        "urgency",
+        "confidence"
+      ],
+      "title": "MaintenanceRecommendation",
+      "type": "object"
+    },
+    "ReliabilityEstimate": {
+      "additionalProperties": false,
+      "description": "Conditional Weibull risk and remaining-useful-life estimate.",
+      "properties": {
+        "assessed_at": {
+          "format": "date-time",
+          "title": "Assessed At",
+          "type": "string"
+        },
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "failure_probability": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Failure Probability",
+          "type": "number"
+        },
+        "horizon_hours": {
+          "exclusiveMinimum": 0,
+          "maximum": 8760,
+          "title": "Horizon Hours",
+          "type": "number"
+        },
+        "machine_id": {
+          "minLength": 1,
+          "title": "Machine Id",
+          "type": "string"
+        },
+        "method": {
+          "const": "weibull_conditional",
+          "default": "weibull_conditional",
+          "title": "Method",
+          "type": "string"
+        },
+        "operating_age_hours": {
+          "minimum": 0,
+          "title": "Operating Age Hours",
+          "type": "number"
+        },
+        "provenance": {
+          "default": "sylvapapers",
+          "minLength": 1,
+          "title": "Provenance",
+          "type": "string"
+        },
+        "rul_hours": {
+          "minimum": 0,
+          "title": "Rul Hours",
+          "type": "number"
+        },
+        "rul_lower_hours": {
+          "minimum": 0,
+          "title": "Rul Lower Hours",
+          "type": "number"
+        },
+        "rul_upper_hours": {
+          "minimum": 0,
+          "title": "Rul Upper Hours",
+          "type": "number"
+        },
+        "schema_version": {
+          "default": "1.0.0",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "machine_id",
+        "assessed_at",
+        "operating_age_hours",
+        "horizon_hours",
+        "failure_probability",
+        "rul_hours",
+        "rul_lower_hours",
+        "rul_upper_hours",
+        "confidence"
+      ],
+      "title": "ReliabilityEstimate",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Decision-ready Module B output for one machine.",
+  "properties": {
+    "anomaly": {
+      "$ref": "#/$defs/AnomalyResult"
+    },
+    "assessment_id": {
+      "minLength": 1,
+      "title": "Assessment Id",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "data_provenance": {
+      "enum": [
+        "module_a",
+        "external",
+        "synthetic_example"
+      ],
+      "title": "Data Provenance",
+      "type": "string"
+    },
+    "machine_id": {
+      "minLength": 1,
+      "title": "Machine Id",
+      "type": "string"
+    },
+    "policy_comparison": {
+      "items": {
+        "$ref": "#/$defs/MaintenancePolicyCost"
+      },
+      "maxItems": 3,
+      "minItems": 3,
+      "title": "Policy Comparison",
+      "type": "array"
+    },
+    "provenance": {
+      "default": "sylvapapers",
+      "minLength": 1,
+      "title": "Provenance",
+      "type": "string"
+    },
+    "recommendation": {
+      "$ref": "#/$defs/MaintenanceRecommendation"
+    },
+    "reliability": {
+      "$ref": "#/$defs/ReliabilityEstimate"
+    },
+    "schema_version": {
+      "default": "1.0.0",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "assessment_id",
+    "machine_id",
+    "created_at",
+    "anomaly",
+    "reliability",
+    "recommendation",
+    "policy_comparison",
+    "data_provenance"
+  ],
+  "title": "MaintenanceAssessment",
+  "type": "object"
+}

@@ -36,7 +36,9 @@ def _contract_inputs(
     try:
         import sylvapapers_contracts as contracts
     except ImportError as exc:
-        raise RuntimeError("sylvapapers_contracts must be installed to load contract files") from exc
+        raise RuntimeError(
+            "sylvapapers_contracts must be installed to load contract files"
+        ) from exc
     factory = contracts.load_factory_config(factory_path)
     scenario = contracts.load_simulation_scenario(scenario_path)
     product = (
@@ -90,6 +92,17 @@ def build_parser() -> argparse.ArgumentParser:
     report = commands.add_parser("report", help="Create a Markdown report from saved results")
     report.add_argument("--input", default="outputs/baseline")
     report.add_argument("--output")
+    maintenance = commands.add_parser(
+        "maintenance",
+        help="Run interpretable predictive-maintenance baselines on Module A outputs",
+    )
+    maintenance.add_argument("--input", default="outputs/baseline")
+    maintenance.add_argument("--output", default="outputs/maintenance")
+    maintenance.add_argument(
+        "--config",
+        default="configs/maintenance/baseline.yaml",
+        help="Maintenance YAML/JSON configuration",
+    )
     editor = commands.add_parser("factory-editor", help="Serve the local visual factory editor")
     editor.add_argument("--factory", default="configs/factory.yaml")
     editor.add_argument("--host", default="127.0.0.1")
@@ -110,6 +123,34 @@ def main(argv: list[str] | None = None) -> int:
         if args.output:
             generate_markdown_report(args.input, args.output)
         print((Path(args.input) / "kpis.json").read_text(encoding="utf-8"))
+        return 0
+    if args.command == "maintenance":
+        from sylvapapers_maintenance import (
+            analyze_maintenance_bundle,
+            save_maintenance_analysis,
+        )
+
+        analysis = analyze_maintenance_bundle(args.input, args.config)
+        paths = save_maintenance_analysis(analysis, args.output)
+        print(
+            json.dumps(
+                {
+                    "machines_assessed": len(analysis.assessments),
+                    "anomalies": sum(item.anomaly.is_anomaly for item in analysis.assessments),
+                    "recommendations": {
+                        item.machine_id: {
+                            "policy": item.recommendation.policy,
+                            "urgency": item.recommendation.urgency,
+                            "failure_probability": item.reliability.failure_probability,
+                        }
+                        for item in analysis.assessments
+                    },
+                    "files": {name: str(path) for name, path in paths.items()},
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
         return 0
     factory, scenario, product = _inputs(args)
     graph = build_process_graph(factory)
