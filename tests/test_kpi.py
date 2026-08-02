@@ -2,12 +2,13 @@ from asteria_digital_twin import KPI_NAMES, calculate_kpis, save_result, simulat
 from test_simulation import factory_config, scenario_config
 
 
-def test_ten_kpis_and_csv_json_exports(tmp_path):
+def test_factory_kpis_and_csv_json_exports(tmp_path):
     result = simulate(factory_config(), scenario_config())
     kpis = calculate_kpis(result)
     assert tuple(kpis) == KPI_NAMES
-    assert len(kpis) == 10
-    assert kpis["quantity_produced"] == 3
+    assert len(kpis) == 11
+    assert kpis["quantity_produced"] == 0
+    assert kpis["material_loss_rate"] == 1
     assert kpis["downtime"] > 0
     assert kpis["total_cost"] > 0
     assert kpis["energy_consumption"] > 0

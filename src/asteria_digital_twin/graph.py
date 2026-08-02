@@ -67,14 +67,21 @@ def build_process_graph(factory: Any) -> nx.DiGraph[str]:
     if isinstance(graph_config, Mapping):
         for raw in items(graph_config.get("edges")):
             edge = plain(raw)
+            attributes: dict[str, Any] = {}
             if isinstance(edge, Mapping):
                 source = edge.get("source") or edge.get("from_node") or edge.get("from")
                 target = edge.get("target") or edge.get("to_node") or edge.get("to")
+                attributes = {
+                    str(key): plain(value)
+                    for key, value in edge.items()
+                    if key
+                    not in {"source", "target", "from_node", "to_node", "from", "to"}
+                }
             else:
                 source, target = list(edge)[:2]
             if source is None or target is None:
                 raise ValueError(f"Invalid process edge: {edge!r}")
-            graph.add_edge(str(source), str(target))
+            graph.add_edge(str(source), str(target), **attributes)
     if graph.number_of_edges() == 0:
         identifiers = [node_id(machine) for machine in machines]
         graph.add_edges_from(pairwise(identifiers))

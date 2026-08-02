@@ -1,4 +1,4 @@
-"""Public data-contract API for Asteria Composites Lab."""
+"""Public data-contract API for SylvaPapers."""
 
 from .loaders import load_factory_config, load_model, load_simulation_scenario
 from .models import (
@@ -6,13 +6,16 @@ from .models import (
     DemandPoint,
     DemandScenario,
     FactoryConfig,
+    FailureDensityConfig,
     FailureEvent,
     ForecastPoint,
+    GraphPosition,
     KPIMetric,
     KPIReport,
     MachineConfig,
     MachineState,
     MachineStatus,
+    MachineTypeConfig,
     MaintenanceRecommendation,
     MarketingCampaign,
     MarketingPlan,
@@ -37,13 +40,16 @@ __all__ = [
     "DemandPoint",
     "DemandScenario",
     "FactoryConfig",
+    "FailureDensityConfig",
     "FailureEvent",
     "ForecastPoint",
+    "GraphPosition",
     "KPIMetric",
     "KPIReport",
     "MachineConfig",
     "MachineState",
     "MachineStatus",
+    "MachineTypeConfig",
     "MaintenanceRecommendation",
     "MarketingCampaign",
     "MarketingPlan",

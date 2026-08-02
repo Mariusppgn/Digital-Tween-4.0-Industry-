@@ -21,8 +21,11 @@ def test_validate_simulate_and_report_commands(tmp_path, capsys):
     output = tmp_path / "result"
     assert main(["simulate", "--config", str(config), "--output", str(output), "--no-plots"]) == 0
     payload = json.loads(capsys.readouterr().out)
-    assert payload["kpis"]["quantity_produced"] == 3
+    assert payload["kpis"]["quantity_produced"] == 0
+    assert payload["kpis"]["material_loss_rate"] == 1
     assert (output / "events.csv").exists()
 
     assert main(["report", "--input", str(output)]) == 0
-    assert json.loads(capsys.readouterr().out)["quantity_produced"] == 3
+    report = json.loads(capsys.readouterr().out)
+    assert report["quantity_produced"] == 0
+    assert report["material_loss_rate"] == 1

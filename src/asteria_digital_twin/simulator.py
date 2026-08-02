@@ -5,12 +5,14 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass, field
 from datetime import datetime
+from itertools import pairwise
 from time import perf_counter
 from typing import Any
 
 import networkx as nx
 
 from .graph import build_process_graph, items, mapping, plain
+from .reliability import conditional_failure_probability
 
 
 @dataclass
@@ -20,6 +22,8 @@ class MachineState:
     capacity: int = 1
     buffer_capacity: int = 1
     failure_probability: float = 0.0
+    failure_shape: float | None = None
+    failure_scale_hours: float | None = None
     repair_time: float = 0.0
     degradation_after: int = 10**9
     degradation_factor: float = 1.0
@@ -38,11 +42,13 @@ class MachineState:
     available: list[float] = field(default_factory=list)
     buffers: list[float] = field(default_factory=list)
     counts: list[int] = field(default_factory=list)
+    operating_hours: list[float] = field(default_factory=list)
 
     def initialise(self) -> None:
         self.available = [0.0] * max(1, self.capacity)
         self.buffers = [0.0] * max(1, self.buffer_capacity)
         self.counts = [0] * max(1, self.capacity)
+        self.operating_hours = [0.0] * max(1, self.capacity)
 
 
 @dataclass
@@ -94,6 +100,10 @@ class DigitalTwinSimulator:
 
     def _machines(self) -> dict[str, MachineState]:
         result: dict[str, MachineState] = {}
+        machine_types = {
+            str(mapping(raw).get("machine_type")): mapping(raw)
+            for raw in items(self.factory.get("machine_types"))
+        }
         configured = {
             str(
                 mapping(raw).get("machine_id") or mapping(raw).get("id") or mapping(raw).get("name")
@@ -109,6 +119,8 @@ class DigitalTwinSimulator:
             selected = [configured[value] for value in selected_ids]
             data = selected[0] if selected else {}
             meta = mapping(data.get("metadata") or {})
+            type_config = machine_types.get(str(data.get("machine_type") or ""), {})
+            failure_density = mapping(type_config.get("failure_density") or {})
             rate = float(data.get("capacity_per_hour") or meta.get("capacity_per_hour") or 0)
             kind = str(
                 node.get("kind")
@@ -143,6 +155,14 @@ class DigitalTwinSimulator:
                     meta.get("failure_probability")
                     or data.get("failure_probability")
                     or (processing_time / (mtbf_hours * 60) if mtbf_hours else 0)
+                ),
+                failure_shape=(
+                    float(failure_density["shape"]) if failure_density.get("shape") else None
+                ),
+                failure_scale_hours=(
+                    float(failure_density["scale_hours"])
+                    if failure_density.get("scale_hours")
+                    else None
                 ),
                 repair_time=float(
                     meta.get("repair_time")
@@ -199,30 +219,78 @@ class DigitalTwinSimulator:
 
     def _route(self, product: dict[str, Any] | None = None) -> list[str]:
         configured = (product or {}).get("routing") or self.scenario.get("routing")
-        if not configured:
-            if nx.is_directed_acyclic_graph(self.graph):
-                route = list(nx.topological_sort(self.graph))
-            else:
-                sources = [
-                    node
-                    for node, data in self.graph.nodes(data=True)
-                    if data.get("kind") == "source"
-                ]
-                sinks = [
-                    node for node, data in self.graph.nodes(data=True) if data.get("kind") == "sink"
-                ]
-                route = nx.shortest_path(self.graph, sources[0], sinks[0])
-            return [
-                node
-                for node in route
-                if self.graph.nodes[node].get("kind") not in {"source", "sink"}
+        if configured:
+            route = []
+            for raw in items(configured):
+                value = plain(raw)
+                if isinstance(value, dict):
+                    value = value.get("machine_id") or value.get("node_id") or value.get("id")
+                route.append(str(value))
+            unknown = [node for node in route if node not in self.graph]
+            if unknown:
+                raise ValueError(f"Product routing references unknown process nodes: {unknown}")
+            disconnected = [
+                (source, target)
+                for source, target in pairwise(route)
+                if not self.graph.has_edge(source, target)
             ]
-        route = []
-        for raw in items(configured):
-            value = plain(raw)
-            if isinstance(value, dict):
-                value = value.get("machine_id") or value.get("node_id") or value.get("id")
-            route.append(str(value))
+            if disconnected:
+                raise ValueError(f"Product routing contains disconnected steps: {disconnected}")
+            return route
+        return self._route_from_graph(product or {})
+
+    def _route_from_graph(self, product: dict[str, Any]) -> list[str]:
+        """Derive one deterministic product route from editable graph conditions."""
+        sources = [
+            node for node, data in self.graph.nodes(data=True) if data.get("kind") == "source"
+        ]
+        if not sources:
+            sources = [node for node, degree in self.graph.in_degree() if degree == 0]
+        if not sources:
+            raise ValueError("The process graph requires at least one source")
+        metadata = mapping(product.get("metadata") or {})
+        tags = {
+            str(value)
+            for value in (
+                product.get("product_id"),
+                metadata.get("route_condition"),
+                metadata.get("grade"),
+            )
+            if value
+        }
+        current = sorted(sources)[0]
+        route: list[str] = (
+            [current] if self.graph.nodes[current].get("kind") not in {"source", "sink"} else []
+        )
+        visited: set[tuple[str, str]] = set()
+        while (
+            self.graph.nodes[current].get("kind") != "sink"
+            and self.graph.out_degree(current) > 0
+        ):
+            candidates = [
+                (current, target, data)
+                for _, target, data in self.graph.out_edges(current, data=True)
+                if self.graph.nodes[target].get("kind") != "rework"
+                and (current, target) not in visited
+            ]
+            if not candidates:
+                raise ValueError(f"No terminating product route from process node {current!r}")
+            matching = [edge for edge in candidates if str(edge[2].get("condition")) in tags]
+            unconditional = [edge for edge in candidates if not edge[2].get("condition")]
+            choices = matching or unconditional or candidates
+            # When only outcome probabilities distinguish branches, follow the
+            # nominal (highest-probability) path; stochastic QC is handled by
+            # the machine event model and losses are recorded separately.
+            selected = sorted(
+                choices,
+                key=lambda edge: (-float(edge[2].get("probability") or 0), str(edge[1])),
+            )[0]
+            visited.add((selected[0], selected[1]))
+            current = selected[1]
+            if self.graph.nodes[current].get("kind") not in {"source", "sink"}:
+                route.append(current)
+            if len(visited) > self.graph.number_of_edges():
+                raise ValueError("Process route did not terminate")
         return route
 
     def _orders(self) -> list[dict[str, Any]]:
@@ -315,7 +383,15 @@ class DigitalTwinSimulator:
         duration = nominal * stochastic_factor * (state.degradation_factor if degraded else 1)
         if degraded:
             self._log("degradation", start, job, state.machine_id)
-        if self.random.random() < state.failure_probability:
+        failure_probability = state.failure_probability
+        if state.failure_shape is not None and state.failure_scale_hours is not None:
+            failure_probability = conditional_failure_probability(
+                state.operating_hours[machine_index],
+                duration / 60,
+                shape=state.failure_shape,
+                scale_hours=state.failure_scale_hours,
+            )
+        if self.random.random() < failure_probability:
             self._log(
                 "breakdown",
                 start,
@@ -323,12 +399,16 @@ class DigitalTwinSimulator:
                 state.machine_id,
                 state.repair_time,
                 cost=round(state.repair_time * state.cost_per_hour / 60, 6),
+                failure_probability=round(failure_probability, 9),
+                operating_age_hours=round(state.operating_hours[machine_index], 6),
+                failure_family=("weibull" if state.failure_shape is not None else "legacy"),
             )
             start += state.repair_time
             state.counts[machine_index] = max(
                 0,
                 int(state.counts[machine_index] * (1 - state.maintenance_recovery)),
             )
+            state.operating_hours[machine_index] *= 1 - state.maintenance_recovery
             self._log("repair", start, job, state.machine_id)
             self._log(
                 "maintenance_complete",
@@ -362,6 +442,7 @@ class DigitalTwinSimulator:
         )
         state.available[machine_index] = end
         state.counts[machine_index] += 1
+        state.operating_hours[machine_index] += duration / 60
         state.last_product_id = product_id
         self.last_load[state.machine_id] = load
         if shared is not None and shared_index is not None:
@@ -377,7 +458,13 @@ class DigitalTwinSimulator:
             if not route:
                 raise ValueError("At least one process operation is required")
             cycle_times = mapping(product.get("cycle_time_minutes") or {})
-            now, index, reworks, first_pass = float(job["release_time"]), 0, 0, True
+            now, index, reworks, first_pass, lost = (
+                float(job["release_time"]),
+                0,
+                0,
+                True,
+                False,
+            )
             self._log("order_released", now, job["job_id"])
             while index < len(route):
                 state = self.machines[route[index]]
@@ -416,10 +503,26 @@ class DigitalTwinSimulator:
                             )
                             index = route.index(target)
                             continue
+                        lost = True
+                        self._log(
+                            "material_loss",
+                            now,
+                            job["job_id"],
+                            state.machine_id,
+                            quantity=1,
+                            quantity_unit=str(product.get("unit") or "unit"),
+                            reason="quality_nonconformity",
+                        )
+                        break
                 index += 1
             delay = max(0.0, now - float(job["due_time"]))
             self._log(
-                "completed", now, job["job_id"], due_time=job["due_time"], delay=round(delay, 6)
+                "completed",
+                now,
+                job["job_id"],
+                due_time=job["due_time"],
+                delay=round(delay, 6),
+                accepted=not lost,
             )
             jobs.append(
                 {
@@ -430,6 +533,8 @@ class DigitalTwinSimulator:
                     "on_time": delay == 0,
                     "rework_count": reworks,
                     "first_pass": first_pass,
+                    "accepted": not lost,
+                    "material_loss": 1 if lost else 0,
                 }
             )
         self.events.sort(key=lambda event: (event["time"], event["event_id"]))

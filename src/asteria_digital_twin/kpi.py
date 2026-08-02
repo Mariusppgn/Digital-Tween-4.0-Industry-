@@ -1,4 +1,4 @@
-"""The ten initial operational KPIs."""
+"""Operational KPIs for production, reliability, quality, loss, energy and cost."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ KPI_NAMES = (
     "average_cycle_time",
     "utilization_rate",
     "defect_rate",
+    "material_loss_rate",
     "downtime",
     "total_cost",
     "energy_consumption",
@@ -26,7 +27,9 @@ def calculate_kpis(result: SimulationResult) -> dict[str, float]:
     failures = [event for event in result.events if event["event_type"] == "breakdown"]
     checks = [event for event in result.events if event["event_type"] in {"qc_pass", "qc_fail"}]
     defects = [event for event in checks if event["event_type"] == "qc_fail"]
-    quantity, makespan = len(jobs), result.makespan
+    accepted_jobs = [job for job in jobs if bool(job.get("accepted", True))]
+    quantity, makespan = len(accepted_jobs), result.makespan
+    released_quantity = len(jobs)
     capacity = sum(result.machine_capacities.values())
     available_minutes = makespan * capacity
     productive = sum(float(event.get("duration", 0)) for event in operations)
@@ -38,10 +41,20 @@ def calculate_kpis(result: SimulationResult) -> dict[str, float]:
     performance = min(1.0, utilization)
     values = {
         "quantity_produced": quantity,
-        "service_rate": sum(bool(job["on_time"]) for job in jobs) / quantity if quantity else 0.0,
+        "service_rate": (
+            sum(bool(job["on_time"]) and bool(job.get("accepted", True)) for job in jobs)
+            / released_quantity
+            if released_quantity
+            else 0.0
+        ),
         "average_cycle_time": fmean(float(job["cycle_time"]) for job in jobs) if jobs else 0.0,
         "utilization_rate": utilization,
         "defect_rate": defect_rate,
+        "material_loss_rate": (
+            sum(float(job.get("material_loss", 0)) for job in jobs) / released_quantity
+            if released_quantity
+            else 0.0
+        ),
         "downtime": downtime,
         "total_cost": sum(float(event.get("cost", 0)) for event in result.events),
         "energy_consumption": sum(float(event.get("energy", 0)) for event in operations),

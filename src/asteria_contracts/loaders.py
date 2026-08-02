@@ -1,4 +1,4 @@
-"""Safe YAML/JSON loaders for versioned Asteria contracts."""
+"""Safe YAML/JSON loaders for versioned SylvaPapers contracts."""
 
 from __future__ import annotations
 

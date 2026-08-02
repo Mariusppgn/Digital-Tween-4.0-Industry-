@@ -85,6 +85,17 @@ def test_graph_and_deterministic_simulation_cover_initial_behaviours():
     assert all(job["rework_count"] == 1 for job in first.jobs)
 
 
+def test_quality_rejection_without_rework_is_recorded_as_material_loss():
+    scenario = scenario_config()
+    scenario["max_reworks"] = 0
+
+    result = simulate(factory_config(), scenario)
+
+    assert all(not job["accepted"] for job in result.jobs)
+    assert all(job["material_loss"] == 1 for job in result.jobs)
+    assert sum(event["event_type"] == "material_loss" for event in result.events) == 3
+
+
 def test_limited_shared_resource_serialises_cure_operations():
     result = simulate(factory_config(), scenario_config())
     starts = [

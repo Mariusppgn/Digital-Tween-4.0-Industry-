@@ -1,9 +1,11 @@
-"""Versioned data contracts shared by the Asteria digital-twin modules."""
+"""Versioned data contracts shared by the SylvaPapers digital-twin modules."""
 
 from __future__ import annotations
 
 from datetime import datetime
 from enum import StrEnum
+from math import exp, inf
+from math import pow as float_power
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -15,7 +17,7 @@ class ContractModel(BaseModel):
     model_config = ConfigDict(extra="forbid", validate_assignment=True)
 
     schema_version: str = Field(default="1.0.0", pattern=r"^\d+\.\d+\.\d+$")
-    provenance: str = Field(default="asteria", min_length=1)
+    provenance: str = Field(default="sylvapapers", min_length=1)
 
 
 class MachineStatus(StrEnum):
@@ -27,6 +29,15 @@ class MachineStatus(StrEnum):
     MAINTENANCE = "maintenance"
 
 
+class GraphPosition(BaseModel):
+    """Editor coordinates persisted with a process step."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    x: float
+    y: float
+
+
 class ProcessNode(ContractModel):
     node_id: str = Field(min_length=1)
     kind: Literal["source", "operation", "buffer", "quality_control", "rework", "sink"]
@@ -34,6 +45,10 @@ class ProcessNode(ContractModel):
     machine_ids: list[str] = Field(default_factory=list)
     capacity: float | None = Field(default=None, gt=0)
     capacity_unit: str | None = None
+    input_materials: list[str] = Field(default_factory=list)
+    output_materials: list[str] = Field(default_factory=list)
+    position: GraphPosition | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def validate_capacity(self) -> ProcessNode:
@@ -49,6 +64,7 @@ class ProcessEdge(ContractModel):
     target: str = Field(min_length=1)
     condition: str | None = None
     probability: float | None = Field(default=None, ge=0, le=1)
+    material: str | None = None
 
 
 class ProcessGraph(ContractModel):
@@ -67,6 +83,46 @@ class ProcessGraph(ContractModel):
             if edge.source == edge.target:
                 raise ValueError("self-loop process edges are not allowed")
         return self
+
+
+class FailureDensityConfig(ContractModel):
+    """Weibull time-to-failure density shared by one machine type.
+
+    The two coefficients describe the density in operating hours. Reference
+    configurations use synthetic hypotheses until observations are available
+    for calibration.
+    """
+
+    family: Literal["weibull"] = "weibull"
+    shape: float = Field(gt=0)
+    scale_hours: float = Field(gt=0)
+
+    def density_at(self, operating_hours: float) -> float:
+        """Evaluate the configured probability density at an operating age."""
+
+        if operating_hours < 0:
+            raise ValueError("operating_hours must be non-negative")
+        normalised_age = operating_hours / self.scale_hours
+        if normalised_age == 0:
+            if self.shape < 1:
+                return inf
+            if self.shape > 1:
+                return 0.0
+            return 1 / self.scale_hours
+        return (
+            (self.shape / self.scale_hours)
+            * float_power(normalised_age, self.shape - 1)
+            * exp(-float_power(normalised_age, self.shape))
+        )
+
+
+class MachineTypeConfig(ContractModel):
+    """Parameters inherited by machines belonging to the same equipment type."""
+
+    machine_type: str = Field(min_length=1)
+    name: str = Field(min_length=1)
+    failure_density: FailureDensityConfig
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class MachineConfig(ContractModel):
@@ -93,12 +149,16 @@ class FactoryConfig(ContractModel):
     factory_id: str = Field(min_length=1)
     name: str = Field(min_length=1)
     timezone: str = Field(default="Europe/Paris", min_length=1)
+    machine_types: list[MachineTypeConfig] = Field(default_factory=list)
     machines: list[MachineConfig] = Field(min_length=1)
     process_graph: ProcessGraph
     resource_calendars: list[ResourceCalendar] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_references(self) -> FactoryConfig:
+        machine_type_ids = [machine_type.machine_type for machine_type in self.machine_types]
+        if len(machine_type_ids) != len(set(machine_type_ids)):
+            raise ValueError("machine types must be unique")
         machine_ids = [machine.machine_id for machine in self.machines]
         if len(machine_ids) != len(set(machine_ids)):
             raise ValueError("machine ids must be unique")
@@ -108,14 +168,23 @@ class FactoryConfig(ContractModel):
         }
         if unknown := referenced - known:
             raise ValueError(f"unknown machine ids in process graph: {sorted(unknown)}")
+        if machine_type_ids:
+            unknown_types = {machine.machine_type for machine in self.machines} - set(
+                machine_type_ids
+            )
+            if unknown_types:
+                raise ValueError(
+                    f"machines reference unknown machine types: {sorted(unknown_types)}"
+                )
         return self
 
 
 class ProductDefinition(ContractModel):
     product_id: str = Field(min_length=1)
     name: str = Field(min_length=1)
+    enabled: bool = True
     unit: str = Field(default="panel", min_length=1)
-    routing: list[str] = Field(min_length=1)
+    routing: list[str] = Field(default_factory=list)
     cycle_time_minutes: dict[str, float] = Field(default_factory=dict)
     bill_of_materials: dict[str, float] = Field(default_factory=dict)
     metadata: dict[str, Any] = Field(default_factory=dict)
@@ -182,6 +251,9 @@ class SimulationScenario(ContractModel):
         known = set(product_ids)
         if unknown := {order.product_id for order in self.orders} - known:
             raise ValueError(f"orders reference unknown products: {sorted(unknown)}")
+        disabled = {product.product_id for product in self.products if not product.enabled}
+        if inactive := {order.product_id for order in self.orders} & disabled:
+            raise ValueError(f"orders reference disabled products: {sorted(inactive)}")
         return self
 
 
