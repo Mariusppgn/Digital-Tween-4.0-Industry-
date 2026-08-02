@@ -7,6 +7,16 @@ __pycache__/
 .coverage
 htmlcov/
 .venv/
+.venv_*/
+.uv-cache/
+.audit-*
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
 dist/
 build/
 
@@ -21,4 +31,3 @@ reports/figures/*.svg
 .vscode/
 .DS_Store
 Thumbs.db
-
