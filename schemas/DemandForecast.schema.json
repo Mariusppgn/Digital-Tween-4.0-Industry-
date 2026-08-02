@@ -29,13 +29,13 @@
           "type": "string"
         },
         "provenance": {
-          "default": "asteria",
+          "default": "sylvapapers",
           "minLength": 1,
           "title": "Provenance",
           "type": "string"
         },
         "quantity_unit": {
-          "default": "panel",
+          "default": "roll",
           "minLength": 1,
           "title": "Quantity Unit",
           "type": "string"
@@ -89,7 +89,7 @@
       "type": "array"
     },
     "provenance": {
-      "default": "asteria",
+      "default": "sylvapapers",
       "minLength": 1,
       "title": "Provenance",
       "type": "string"

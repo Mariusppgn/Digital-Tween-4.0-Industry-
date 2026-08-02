@@ -9,7 +9,7 @@
           "type": "string"
         },
         "provenance": {
-          "default": "asteria",
+          "default": "sylvapapers",
           "minLength": 1,
           "title": "Provenance",
           "type": "string"
@@ -96,7 +96,7 @@
       "type": "string"
     },
     "provenance": {
-      "default": "asteria",
+      "default": "sylvapapers",
       "minLength": 1,
       "title": "Provenance",
       "type": "string"

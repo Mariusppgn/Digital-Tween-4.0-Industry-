@@ -16,8 +16,8 @@ wheels = [
 ]
 
 [[package]]
-name = "asteria-composites-lab"
-version = "0.1.0"
+name = "sylvapapers-digital-twin"
+version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "matplotlib" },

@@ -1,10 +1,10 @@
-# Asteria contract schemas
+# SylvaPapers contract schemas
 
 The canonical schemas are generated from the Pydantic models, which prevents
 documentation drift:
 
 ```python
-from asteria_contracts import export_json_schemas
+from sylvapapers_contracts import export_json_schemas
 
 export_json_schemas("schemas/generated")
 ```

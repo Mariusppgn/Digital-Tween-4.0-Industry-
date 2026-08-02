@@ -7,8 +7,8 @@ from pathlib import Path
 
 import networkx as nx
 
-from asteria_contracts import load_factory_config, load_simulation_scenario
-from asteria_digital_twin import calculate_kpis, save_result, simulate
+from sylvapapers_contracts import load_factory_config, load_simulation_scenario
+from sylvapapers_digital_twin import calculate_kpis, save_result, simulate
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -43,8 +43,8 @@ def test_fast_baseline_is_deterministic_and_respects_core_invariants() -> None:
     assert first.jobs == second.jobs
     assert len(first.jobs) == 10
     assert first.runtime_seconds < 30
-    assert not nx.is_directed_acyclic_graph(first.graph)
-    assert first.machine_capacities["layup"] == 2
+    assert nx.is_directed_acyclic_graph(first.graph)
+    assert first.machine_capacities["drying"] == 2
     assert all(float(event.get("inventory", 0)) >= 0 for event in first.events)
 
     concurrency = _maximum_concurrency(first.events)
@@ -54,7 +54,8 @@ def test_fast_baseline_is_deterministic_and_respects_core_invariants() -> None:
     )
 
     event_types = {str(event["event_type"]) for event in first.events}
-    assert {"setup", "breakdown", "maintenance_complete", "qc_fail", "rework"} <= event_types
+    assert {"setup", "operation_start", "operation_end", "qc_pass", "completed"} <= event_types
+    assert "rework" not in event_types
 
 
 def test_fast_baseline_exports_kpis_and_three_figures(tmp_path: Path) -> None:
@@ -64,7 +65,7 @@ def test_fast_baseline_exports_kpis_and_three_figures(tmp_path: Path) -> None:
     kpis = calculate_kpis(result)
     paths = save_result(result, tmp_path)
 
-    assert len(kpis) == 10
+    assert len(kpis) == 11
     assert kpis["quantity_produced"] == 10
     assert kpis["energy_consumption"] > 0
     assert kpis["total_cost"] > 0

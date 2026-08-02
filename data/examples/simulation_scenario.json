@@ -1,89 +1,186 @@
 {
   "schema_version": "1.0.0",
-  "provenance": "synthetic-engineering-assumptions",
-  "scenario_id": "baseline-week-01",
-  "name": "Fast baseline with two composite panel families",
-  "factory_id": "asteria-demo",
+  "provenance": "synthetic-engineering-hypotheses-not-calibrated",
+  "scenario_id": "sylvapapers-baseline-week-01",
+  "name": "Baseline papeterie - trois familles de rouleaux configurables",
+  "factory_id": "sylvapapers-demo",
   "start_at": "2026-09-07T06:00:00+02:00",
   "end_at": "2026-09-11T22:00:00+02:00",
   "random_seed": 42,
   "fidelity": "fast",
-  "max_reworks": 1,
   "interarrival_time": 1.5,
   "products": [
     {
-      "product_id": "panel-a",
-      "name": "Structural Panel A",
-      "unit": "panel",
+      "product_id": "kraft-paper-roll",
+      "name": "Rouleau de papier kraft",
+      "enabled": true,
+      "unit": "roll",
       "routing": [
-        "preparation",
-        "cutting",
-        "layup",
-        "intermediate-buffer",
-        "autoclave",
-        "finishing",
-        "qc"
+        "debarking",
+        "chipping",
+        "chips-buffer",
+        "kraft-pulping",
+        "pulp-washing",
+        "screening",
+        "bleaching",
+        "stock-preparation",
+        "refining",
+        "forming",
+        "pressing",
+        "drying",
+        "calendering",
+        "winding",
+        "quality-control"
       ],
       "cycle_time_minutes": {
-        "preparation": 8,
-        "cutting": 6,
-        "layup": 18,
-        "intermediate-buffer": 2,
-        "autoclave": 60,
-        "finishing": 10,
-        "qc": 7
+        "debarking": 8,
+        "chipping": 10,
+        "chips-buffer": 3,
+        "kraft-pulping": 55,
+        "pulp-washing": 12,
+        "screening": 9,
+        "bleaching": 35,
+        "stock-preparation": 12,
+        "refining": 14,
+        "forming": 22,
+        "pressing": 18,
+        "drying": 38,
+        "calendering": 12,
+        "winding": 16,
+        "quality-control": 6
       },
       "bill_of_materials": {
-        "carbon_fabric_m2": 2.4,
-        "resin_kg": 1.2
+        "raw_wood_m3": 3.2,
+        "process_water_m3": 18.0,
+        "starch_kg": 22.0
+      },
+      "metadata": {
+        "data_classification": "synthetic_hypothesis",
+        "route_condition": "papier_kraft",
+        "basis_weight_g_m2": 120,
+        "nominal_roll_mass_kg": 1000
       }
     },
     {
-      "product_id": "panel-b",
-      "name": "Sandwich Panel B",
-      "unit": "panel",
+      "product_id": "printing-paper-roll",
+      "name": "Rouleau de papier impression",
+      "enabled": true,
+      "unit": "roll",
       "routing": [
-        "preparation",
-        "cutting",
-        "layup",
-        "intermediate-buffer",
-        "autoclave",
-        "finishing",
-        "qc"
+        "debarking",
+        "chipping",
+        "chips-buffer",
+        "tmp-pulping",
+        "pulp-washing",
+        "screening",
+        "bleaching",
+        "stock-preparation",
+        "refining",
+        "forming",
+        "pressing",
+        "drying",
+        "calendering",
+        "winding",
+        "quality-control"
       ],
       "cycle_time_minutes": {
-        "preparation": 10,
-        "cutting": 7,
-        "layup": 22,
-        "intermediate-buffer": 2,
-        "autoclave": 72,
-        "finishing": 12,
-        "qc": 8
+        "debarking": 8,
+        "chipping": 10,
+        "chips-buffer": 3,
+        "tmp-pulping": 48,
+        "pulp-washing": 12,
+        "screening": 9,
+        "bleaching": 40,
+        "stock-preparation": 14,
+        "refining": 16,
+        "forming": 24,
+        "pressing": 18,
+        "drying": 42,
+        "calendering": 14,
+        "winding": 17,
+        "quality-control": 7
       },
       "bill_of_materials": {
-        "carbon_fabric_m2": 3.1,
-        "resin_kg": 1.5,
-        "core_m2": 1.0
+        "raw_wood_m3": 2.8,
+        "process_water_m3": 20.0,
+        "mineral_filler_kg": 85.0,
+        "starch_kg": 28.0
+      },
+      "metadata": {
+        "data_classification": "synthetic_hypothesis",
+        "route_condition": "papier_impression",
+        "basis_weight_g_m2": 80,
+        "nominal_roll_mass_kg": 900
+      }
+    },
+    {
+      "product_id": "linerboard-roll",
+      "name": "Rouleau de papier pour carton ondulé",
+      "enabled": false,
+      "unit": "roll",
+      "routing": [
+        "debarking",
+        "chipping",
+        "chips-buffer",
+        "board-pulping",
+        "pulp-washing",
+        "screening",
+        "stock-preparation",
+        "refining",
+        "forming",
+        "pressing",
+        "drying",
+        "calendering",
+        "winding",
+        "quality-control"
+      ],
+      "cycle_time_minutes": {
+        "debarking": 8,
+        "chipping": 10,
+        "chips-buffer": 3,
+        "board-pulping": 62,
+        "pulp-washing": 12,
+        "screening": 8,
+        "stock-preparation": 10,
+        "refining": 12,
+        "forming": 20,
+        "pressing": 16,
+        "drying": 34,
+        "calendering": 10,
+        "winding": 15,
+        "quality-control": 6
+      },
+      "bill_of_materials": {
+        "raw_wood_m3": 3.5,
+        "process_water_m3": 17.0,
+        "starch_kg": 30.0
+      },
+      "metadata": {
+        "data_classification": "synthetic_hypothesis",
+        "route_condition": "carton",
+        "basis_weight_g_m2": 160,
+        "nominal_roll_mass_kg": 1200,
+        "activation_note": "Produit possible, désactivé dans le scénario de référence"
       }
     }
   ],
   "orders": [
     {
-      "order_id": "order-001",
-      "product_id": "panel-a",
+      "order_id": "kraft-order-001",
+      "product_id": "kraft-paper-roll",
       "quantity": 6,
-      "quantity_unit": "panel",
+      "quantity_unit": "roll",
       "release_at": "2026-09-07T06:00:00+02:00",
-      "due_at": "2026-09-08T18:00:00+02:00",
+      "due_at": "2026-09-09T18:00:00+02:00",
       "priority": 2
     },
     {
-      "order_id": "order-002",
-      "product_id": "panel-b",
+      "order_id": "printing-order-001",
+      "product_id": "printing-paper-roll",
       "quantity": 4,
-      "quantity_unit": "panel",
+      "quantity_unit": "roll",
       "release_at": "2026-09-07T08:00:00+02:00",
-      "due_at": "2026-09-10T16:00:00+02:00",
+      "due_at": "2026-09-11T16:00:00+02:00",
       "priority": 1
     }
   ]

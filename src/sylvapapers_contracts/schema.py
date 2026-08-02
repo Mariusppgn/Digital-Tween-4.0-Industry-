@@ -15,6 +15,8 @@ def contract_types() -> dict[str, type[ContractModel]]:
     names = (
         "FactoryConfig",
         "ProcessGraph",
+        "FailureDensityConfig",
+        "MachineTypeConfig",
         "MachineConfig",
         "ProductDefinition",
         "ProductionOrder",

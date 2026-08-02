@@ -1,4 +1,4 @@
-from asteria_digital_twin import build_process_graph, simulate
+from sylvapapers_digital_twin import build_process_graph, simulate
 
 
 def factory_config():
@@ -10,8 +10,8 @@ def factory_config():
             "metadata": {"processing_time": 4, "energy_kw": 3, "cost_per_hour": 30},
         },
         {
-            "machine_id": "layup",
-            "name": "Drapage",
+            "machine_id": "forming",
+            "name": "Formation de feuille",
             "machine_type": "process",
             "metadata": {
                 "processing_time": 10,
@@ -39,15 +39,15 @@ def factory_config():
             "machine_id": "qc",
             "name": "Contrôle",
             "machine_type": "quality_control",
-            "metadata": {"processing_time": 2, "defect_rate": 1, "rework_to": "layup"},
+            "metadata": {"processing_time": 2, "defect_rate": 1},
         },
     ]
     return {
-        "factory_id": "ASTERIA",
+        "factory_id": "SYLVAPAPERS",
         "machines": machines,
         "process_graph": {
             "nodes": [machine["machine_id"] for machine in machines],
-            "edges": [["cut", "layup"], ["layup", "cure"], ["cure", "qc"]],
+            "edges": [["cut", "forming"], ["forming", "cure"], ["cure", "qc"]],
         },
     }
 
@@ -56,21 +56,20 @@ def scenario_config():
     return {
         "scenario_id": "baseline",
         "random_seed": 7,
-        "orders": [{"order_id": "PO-1", "product_id": "panel", "quantity": 3, "due_at": 200}],
-        "max_reworks": 1,
+        "orders": [{"order_id": "PO-1", "product_id": "paper-roll", "quantity": 3, "due_at": 200}],
     }
 
 
 def test_graph_and_deterministic_simulation_cover_initial_behaviours():
     graph = build_process_graph(factory_config())
-    assert list(graph.nodes) == ["cut", "layup", "cure", "qc"]
-    assert graph.has_edge("layup", "cure")
+    assert list(graph.nodes) == ["cut", "forming", "cure", "qc"]
+    assert graph.has_edge("forming", "cure")
 
     first = simulate(factory_config(), scenario_config())
     second = simulate(factory_config(), scenario_config())
     assert first.events == second.events
     assert first.jobs == second.jobs
-    assert first.machine_capacities["layup"] == 2
+    assert first.machine_capacities["forming"] == 2
     assert len(first.jobs) == 3
     event_types = {event["event_type"] for event in first.events}
     assert {
@@ -79,10 +78,18 @@ def test_graph_and_deterministic_simulation_cover_initial_behaviours():
         "repair",
         "degradation",
         "qc_fail",
-        "rework",
+        "material_loss",
         "completed",
     } <= event_types
-    assert all(job["rework_count"] == 1 for job in first.jobs)
+    assert all(job["material_loss"] == 1 for job in first.jobs)
+
+
+def test_quality_rejection_is_recorded_as_material_loss():
+    result = simulate(factory_config(), scenario_config())
+
+    assert all(not job["accepted"] for job in result.jobs)
+    assert all(job["material_loss"] == 1 for job in result.jobs)
+    assert sum(event["event_type"] == "material_loss" for event in result.events) == 3
 
 
 def test_limited_shared_resource_serialises_cure_operations():

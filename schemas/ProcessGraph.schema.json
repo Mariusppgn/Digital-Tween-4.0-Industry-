@@ -1,5 +1,25 @@
 {
   "$defs": {
+    "GraphPosition": {
+      "additionalProperties": false,
+      "description": "Editor coordinates persisted with a process step.",
+      "properties": {
+        "x": {
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "title": "Y",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "title": "GraphPosition",
+      "type": "object"
+    },
     "ProcessEdge": {
       "additionalProperties": false,
       "properties": {
@@ -14,6 +34,18 @@
           ],
           "default": null,
           "title": "Condition"
+        },
+        "material": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Material"
         },
         "probability": {
           "anyOf": [
@@ -30,7 +62,7 @@
           "title": "Probability"
         },
         "provenance": {
-          "default": "asteria",
+          "default": "sylvapapers",
           "minLength": 1,
           "title": "Provenance",
           "type": "string"
@@ -87,13 +119,19 @@
           "default": null,
           "title": "Capacity Unit"
         },
+        "input_materials": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Input Materials",
+          "type": "array"
+        },
         "kind": {
           "enum": [
             "source",
             "operation",
             "buffer",
             "quality_control",
-            "rework",
             "sink"
           ],
           "title": "Kind",
@@ -106,6 +144,11 @@
           "title": "Machine Ids",
           "type": "array"
         },
+        "metadata": {
+          "additionalProperties": true,
+          "title": "Metadata",
+          "type": "object"
+        },
         "name": {
           "minLength": 1,
           "title": "Name",
@@ -116,8 +159,26 @@
           "title": "Node Id",
           "type": "string"
         },
+        "output_materials": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Output Materials",
+          "type": "array"
+        },
+        "position": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GraphPosition"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "provenance": {
-          "default": "asteria",
+          "default": "sylvapapers",
           "minLength": 1,
           "title": "Provenance",
           "type": "string"
@@ -157,7 +218,7 @@
       "type": "array"
     },
     "provenance": {
-      "default": "asteria",
+      "default": "sylvapapers",
       "minLength": 1,
       "title": "Provenance",
       "type": "string"

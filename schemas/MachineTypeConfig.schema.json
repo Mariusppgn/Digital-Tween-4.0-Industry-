@@ -1,0 +1,85 @@
+{
+  "$defs": {
+    "FailureDensityConfig": {
+      "additionalProperties": false,
+      "description": "Weibull time-to-failure density shared by one machine type.\n\nThe two coefficients describe the density in operating hours. Reference\nconfigurations use synthetic hypotheses until observations are available\nfor calibration.",
+      "properties": {
+        "family": {
+          "const": "weibull",
+          "default": "weibull",
+          "title": "Family",
+          "type": "string"
+        },
+        "provenance": {
+          "default": "sylvapapers",
+          "minLength": 1,
+          "title": "Provenance",
+          "type": "string"
+        },
+        "scale_hours": {
+          "exclusiveMinimum": 0,
+          "title": "Scale Hours",
+          "type": "number"
+        },
+        "schema_version": {
+          "default": "1.0.0",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "shape": {
+          "exclusiveMinimum": 0,
+          "title": "Shape",
+          "type": "number"
+        }
+      },
+      "required": [
+        "shape",
+        "scale_hours"
+      ],
+      "title": "FailureDensityConfig",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Parameters inherited by machines belonging to the same equipment type.",
+  "properties": {
+    "failure_density": {
+      "$ref": "#/$defs/FailureDensityConfig"
+    },
+    "machine_type": {
+      "minLength": 1,
+      "title": "Machine Type",
+      "type": "string"
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "title": "Metadata",
+      "type": "object"
+    },
+    "name": {
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "provenance": {
+      "default": "sylvapapers",
+      "minLength": 1,
+      "title": "Provenance",
+      "type": "string"
+    },
+    "schema_version": {
+      "default": "1.0.0",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "machine_type",
+    "name",
+    "failure_density"
+  ],
+  "title": "MachineTypeConfig",
+  "type": "object"
+}

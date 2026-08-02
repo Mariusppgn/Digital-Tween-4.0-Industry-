@@ -152,7 +152,7 @@ def generate_markdown_report(
     summary = json.loads((source / "summary.json").read_text(encoding="utf-8"))
     kpis = json.loads((source / "kpis.json").read_text(encoding="utf-8"))
     lines = [
-        "# Asteria simulation report",
+        "# SylvaPapers paper-mill simulation report",
         "",
         "## Reproducibility",
         "",
@@ -172,7 +172,8 @@ def generate_markdown_report(
         "## Assumptions and limits",
         "",
         "- All baseline values and events are synthetic.",
-        "- The model represents operational flow, not detailed composite physics.",
+        "- The model represents operational paper-mill flow, not detailed fibre or fluid physics.",
+        "- Quality rejects are measured as material losses; no recycling loop is simulated.",
         "- Human calendars and material inventories are simplified in this first delivery.",
         "",
     ]

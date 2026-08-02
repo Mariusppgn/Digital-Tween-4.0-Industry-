@@ -1,0 +1,145 @@
+<link rel="stylesheet" href="factory-editor.css">
+
+<main class="editor-shell" aria-labelledby="editor-title">
+  <header class="editor-header">
+    <div>
+      <p class="eyebrow">Jumeau numérique local</p>
+      <h1 id="editor-title">Usine papetière — éditeur de procédé</h1>
+      <p id="factory-summary" class="muted">Chargement de la configuration validée…</p>
+    </div>
+    <div class="toolbar" aria-label="Actions sur le fichier">
+      <label class="file-action">
+        Importer JSON
+        <input id="import-file" type="file" accept="application/json,.json">
+      </label>
+      <button id="export-json" type="button">Exporter JSON</button>
+      <button id="validate" type="button">Valider</button>
+      <button id="write-config" type="button" disabled>Écrire la configuration</button>
+    </div>
+  </header>
+
+  <p id="status" class="status" role="status" aria-live="polite"></p>
+
+  <div class="editor-layout">
+    <aside class="palette" aria-labelledby="palette-title">
+      <h2 id="palette-title">Éléments</h2>
+      <p class="muted">Glissez un type sur le plan, ou activez-le puis cliquez sur le plan.</p>
+      <div id="node-palette" class="palette-list"></div>
+      <button id="add-machine" type="button">Ajouter une machine</button>
+      <button id="edit-machine-types" type="button">Types et pannes</button>
+      <p class="keyboard-help"><strong>Clavier :</strong> flèches pour déplacer l’étape sélectionnée, Maj + flèches pour 20 px, Suppr pour retirer.</p>
+    </aside>
+
+    <section class="workspace" aria-labelledby="canvas-title">
+      <div class="workspace-bar">
+        <div>
+          <h2 id="canvas-title">Flux de transformation</h2>
+          <p class="muted">Bois brut → Transformation → Rouleaux de papier</p>
+        </div>
+        <div class="toolbar" aria-label="Actions sur le graphe">
+          <button id="connect-mode" type="button" aria-pressed="false">Relier deux étapes</button>
+          <button id="undo" type="button" disabled>Annuler</button>
+          <button id="redo" type="button" disabled>Rétablir</button>
+          <button id="duplicate-selected" type="button" disabled>Dupliquer</button>
+          <button id="auto-layout" type="button">Auto-agencer</button>
+          <button id="edit-selected" type="button" disabled>Modifier</button>
+          <button id="delete-selected" class="danger" type="button" disabled>Supprimer</button>
+        </div>
+      </div>
+      <div id="graph-scroll" class="graph-scroll">
+        <div id="graph-canvas" class="graph-canvas" aria-label="Graphe du procédé industriel">
+          <svg id="edge-layer" class="edge-layer" aria-hidden="true">
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z"></path>
+              </marker>
+            </defs>
+          </svg>
+          <div id="node-layer"></div>
+          <button id="empty-canvas-action" class="empty-canvas-action" type="button" hidden>Ajouter ici</button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="inspector" aria-labelledby="inspector-title">
+      <h2 id="inspector-title">Détails</h2>
+      <div id="selection-details"><p class="muted">Sélectionnez une étape, une machine ou une relation.</p></div>
+      <section aria-labelledby="relations-title">
+        <h3 id="relations-title">Relations</h3>
+        <ul id="edge-list" class="edge-list"></ul>
+      </section>
+      <section aria-labelledby="machines-title">
+        <h3 id="machines-title">Machines</h3>
+        <ul id="machine-list" class="machine-list"></ul>
+      </section>
+    </aside>
+  </div>
+</main>
+
+<dialog id="node-dialog" aria-labelledby="node-dialog-title">
+  <form id="node-form" method="dialog">
+    <h2 id="node-dialog-title">Modifier l’étape</h2>
+    <input id="node-original-id" type="hidden">
+    <label>Identifiant <input id="node-id" required pattern="[A-Za-z0-9][A-Za-z0-9_-]*"></label>
+    <label>Nom <input id="node-name" required></label>
+    <label>Type
+      <select id="node-kind" required>
+        <option value="source">Entrée</option>
+        <option value="operation">Opération</option>
+        <option value="buffer">Stock tampon</option>
+        <option value="quality_control">Contrôle qualité</option>
+        <option value="sink">Sortie</option>
+      </select>
+    </label>
+    <label>Machines (identifiants séparés par des virgules) <input id="node-machines"></label>
+    <label>Matières en entrée <input id="node-inputs" placeholder="copeaux, eau"></label>
+    <label>Matières en sortie <input id="node-outputs" placeholder="pâte écrue"></label>
+    <label>Capacité <input id="node-capacity" type="number" min="0" step="any"></label>
+    <label>Unité de capacité <input id="node-capacity-unit"></label>
+    <p id="node-error" class="form-error" role="alert"></p>
+    <div class="dialog-actions">
+      <button value="cancel" type="button" data-close="node-dialog">Annuler</button>
+      <button value="default" type="submit">Enregistrer</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="machine-dialog" aria-labelledby="machine-dialog-title">
+  <form id="machine-form" method="dialog">
+    <h2 id="machine-dialog-title">Machine</h2>
+    <input id="machine-original-id" type="hidden">
+    <label>Identifiant <input id="machine-id" required pattern="[A-Za-z0-9][A-Za-z0-9_-]*"></label>
+    <label>Nom <input id="machine-name" required></label>
+    <label>Type <select id="machine-type" required></select></label>
+    <label>Capacité par heure <input id="machine-capacity" type="number" min="0.000001" step="any" required></label>
+    <label>Unité <input id="machine-unit" required value="tonnes/hour"></label>
+    <label>Disponibilité <input id="machine-availability" type="number" min="0.000001" max="1" step="0.01" required value="0.95"></label>
+    <label>Capacités (séparées par des virgules) <input id="machine-capabilities" required></label>
+    <div id="failure-density" class="density-preview"></div>
+    <p id="machine-error" class="form-error" role="alert"></p>
+    <div class="dialog-actions">
+      <button id="delete-machine" class="danger" type="button" hidden>Supprimer la machine</button>
+      <button type="button" data-close="machine-dialog">Annuler</button>
+      <button type="submit">Enregistrer</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="type-dialog" aria-labelledby="type-dialog-title">
+  <form id="type-form" method="dialog">
+    <h2 id="type-dialog-title">Type de machine et densité de panne</h2>
+    <label>Type <select id="type-id" required></select></label>
+    <label>Nom <input id="type-name" required></label>
+    <label>Famille <input value="weibull" readonly></label>
+    <label>Forme β <input id="type-shape" type="number" min="0.000001" step="any" required></label>
+    <label>Échelle η (heures) <input id="type-scale" type="number" min="0.000001" step="any" required></label>
+    <p class="muted">Hypothèse synthétique à calibrer sur l’historique de maintenance.</p>
+    <p id="type-error" class="form-error" role="alert"></p>
+    <div class="dialog-actions">
+      <button type="button" data-close="type-dialog">Annuler</button>
+      <button type="submit">Enregistrer</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="factory-editor.js"></script>

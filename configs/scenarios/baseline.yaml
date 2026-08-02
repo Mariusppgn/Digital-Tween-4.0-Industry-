@@ -1,5 +1,4 @@
-# Combined entry point used by the public CLI.
+# Combined SylvaPapers paper-mill entry point used by the public CLI.
 # Paths are resolved relative to this file.
 factory: ../factory.yaml
 scenario: ../../data/examples/simulation_scenario.json
-

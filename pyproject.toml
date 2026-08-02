@@ -3,9 +3,9 @@ requires = ["setuptools>=69"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "asteria-composites-lab"
-version = "0.1.0"
-description = "A modular, reproducible industrial digital-twin demonstrator for composite panel manufacturing."
+name = "sylvapapers-digital-twin"
+version = "0.2.0"
+description = "A configurable paper-mill digital twin with visual process editing and Weibull reliability."
 readme = "README.md"
 requires-python = ">=3.12"
 license = {file = "LICENSE"}
@@ -15,7 +15,8 @@ authors = [
 keywords = [
   "digital-twin",
   "discrete-event-simulation",
-  "composites",
+  "papermaking",
+  "paper-mill",
   "predictive-maintenance",
   "operations-research",
 ]
@@ -47,10 +48,13 @@ dev = [
 ]
 
 [project.scripts]
-asteria = "asteria_digital_twin.cli:main"
+sylvapapers = "sylvapapers_digital_twin.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"sylvapapers_digital_twin.web" = ["*.html", "*.css", "*.js"]
 
 [tool.pytest.ini_options]
 addopts = "-q"
@@ -72,6 +76,6 @@ indent-style = "space"
 [tool.mypy]
 python_version = "3.12"
 strict = true
-packages = ["asteria_contracts", "asteria_digital_twin"]
+packages = ["sylvapapers_contracts", "sylvapapers_digital_twin"]
 mypy_path = "src"
 warn_unused_ignores = true
