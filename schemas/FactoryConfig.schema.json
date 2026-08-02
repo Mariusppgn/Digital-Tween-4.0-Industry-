@@ -1,5 +1,65 @@
 {
   "$defs": {
+    "FailureDensityConfig": {
+      "additionalProperties": false,
+      "description": "Weibull time-to-failure density shared by one machine type.\n\nThe two coefficients describe the density in operating hours. Reference\nconfigurations use synthetic hypotheses until observations are available\nfor calibration.",
+      "properties": {
+        "family": {
+          "const": "weibull",
+          "default": "weibull",
+          "title": "Family",
+          "type": "string"
+        },
+        "provenance": {
+          "default": "sylvapapers",
+          "minLength": 1,
+          "title": "Provenance",
+          "type": "string"
+        },
+        "scale_hours": {
+          "exclusiveMinimum": 0,
+          "title": "Scale Hours",
+          "type": "number"
+        },
+        "schema_version": {
+          "default": "1.0.0",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "shape": {
+          "exclusiveMinimum": 0,
+          "title": "Shape",
+          "type": "number"
+        }
+      },
+      "required": [
+        "shape",
+        "scale_hours"
+      ],
+      "title": "FailureDensityConfig",
+      "type": "object"
+    },
+    "GraphPosition": {
+      "additionalProperties": false,
+      "description": "Editor coordinates persisted with a process step.",
+      "properties": {
+        "x": {
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "title": "Y",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "title": "GraphPosition",
+      "type": "object"
+    },
     "MachineConfig": {
       "additionalProperties": false,
       "properties": {
@@ -76,7 +136,7 @@
           "type": "string"
         },
         "provenance": {
-          "default": "asteria",
+          "default": "sylvapapers",
           "minLength": 1,
           "title": "Provenance",
           "type": "string"
@@ -98,6 +158,49 @@
       "title": "MachineConfig",
       "type": "object"
     },
+    "MachineTypeConfig": {
+      "additionalProperties": false,
+      "description": "Parameters inherited by machines belonging to the same equipment type.",
+      "properties": {
+        "failure_density": {
+          "$ref": "#/$defs/FailureDensityConfig"
+        },
+        "machine_type": {
+          "minLength": 1,
+          "title": "Machine Type",
+          "type": "string"
+        },
+        "metadata": {
+          "additionalProperties": true,
+          "title": "Metadata",
+          "type": "object"
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "provenance": {
+          "default": "sylvapapers",
+          "minLength": 1,
+          "title": "Provenance",
+          "type": "string"
+        },
+        "schema_version": {
+          "default": "1.0.0",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "machine_type",
+        "name",
+        "failure_density"
+      ],
+      "title": "MachineTypeConfig",
+      "type": "object"
+    },
     "ProcessEdge": {
       "additionalProperties": false,
       "properties": {
@@ -112,6 +215,18 @@
           ],
           "default": null,
           "title": "Condition"
+        },
+        "material": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Material"
         },
         "probability": {
           "anyOf": [
@@ -128,7 +243,7 @@
           "title": "Probability"
         },
         "provenance": {
-          "default": "asteria",
+          "default": "sylvapapers",
           "minLength": 1,
           "title": "Provenance",
           "type": "string"
@@ -177,7 +292,7 @@
           "type": "array"
         },
         "provenance": {
-          "default": "asteria",
+          "default": "sylvapapers",
           "minLength": 1,
           "title": "Provenance",
           "type": "string"
@@ -224,13 +339,19 @@
           "default": null,
           "title": "Capacity Unit"
         },
+        "input_materials": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Input Materials",
+          "type": "array"
+        },
         "kind": {
           "enum": [
             "source",
             "operation",
             "buffer",
             "quality_control",
-            "rework",
             "sink"
           ],
           "title": "Kind",
@@ -243,6 +364,11 @@
           "title": "Machine Ids",
           "type": "array"
         },
+        "metadata": {
+          "additionalProperties": true,
+          "title": "Metadata",
+          "type": "object"
+        },
         "name": {
           "minLength": 1,
           "title": "Name",
@@ -253,8 +379,26 @@
           "title": "Node Id",
           "type": "string"
         },
+        "output_materials": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Output Materials",
+          "type": "array"
+        },
+        "position": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GraphPosition"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "provenance": {
-          "default": "asteria",
+          "default": "sylvapapers",
           "minLength": 1,
           "title": "Provenance",
           "type": "string"
@@ -288,7 +432,7 @@
           "type": "object"
         },
         "provenance": {
-          "default": "asteria",
+          "default": "sylvapapers",
           "minLength": 1,
           "title": "Provenance",
           "type": "string"
@@ -335,6 +479,13 @@
       "title": "Factory Id",
       "type": "string"
     },
+    "machine_types": {
+      "items": {
+        "$ref": "#/$defs/MachineTypeConfig"
+      },
+      "title": "Machine Types",
+      "type": "array"
+    },
     "machines": {
       "items": {
         "$ref": "#/$defs/MachineConfig"
@@ -352,7 +503,7 @@
       "$ref": "#/$defs/ProcessGraph"
     },
     "provenance": {
-      "default": "asteria",
+      "default": "sylvapapers",
       "minLength": 1,
       "title": "Provenance",
       "type": "string"

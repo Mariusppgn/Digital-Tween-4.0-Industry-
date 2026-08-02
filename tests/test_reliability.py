@@ -2,8 +2,8 @@ import math
 
 import pytest
 
-from asteria_digital_twin import simulate
-from asteria_digital_twin.reliability import (
+from sylvapapers_digital_twin import simulate
+from sylvapapers_digital_twin.reliability import (
     conditional_failure_probability,
     weibull_cdf,
     weibull_density,

@@ -1,4 +1,4 @@
-from asteria_digital_twin import KPI_NAMES, calculate_kpis, save_result, simulate
+from sylvapapers_digital_twin import KPI_NAMES, calculate_kpis, save_result, simulate
 from test_simulation import factory_config, scenario_config
 
 

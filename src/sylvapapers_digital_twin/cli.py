@@ -34,9 +34,9 @@ def _contract_inputs(
 ) -> tuple[Any, Any, Any]:
     """Load separately versioned contract files."""
     try:
-        import asteria_contracts as contracts
+        import sylvapapers_contracts as contracts
     except ImportError as exc:
-        raise RuntimeError("asteria_contracts must be installed to load contract files") from exc
+        raise RuntimeError("sylvapapers_contracts must be installed to load contract files") from exc
     factory = contracts.load_factory_config(factory_path)
     scenario = contracts.load_simulation_scenario(scenario_path)
     product = (
@@ -79,7 +79,7 @@ def _input_arguments(parser: argparse.ArgumentParser) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     """Build the public CLI parser."""
-    parser = argparse.ArgumentParser(prog="asteria")
+    parser = argparse.ArgumentParser(prog="sylvapapers", description="SylvaPapers paper-mill twin")
     commands = parser.add_subparsers(dest="command", required=True)
     validate = commands.add_parser("validate-config", help="Validate contracts and graph")
     _input_arguments(validate)
@@ -90,12 +90,22 @@ def build_parser() -> argparse.ArgumentParser:
     report = commands.add_parser("report", help="Create a Markdown report from saved results")
     report.add_argument("--input", default="outputs/baseline")
     report.add_argument("--output")
+    editor = commands.add_parser("factory-editor", help="Serve the local visual factory editor")
+    editor.add_argument("--factory", default="configs/factory.yaml")
+    editor.add_argument("--host", default="127.0.0.1")
+    editor.add_argument("--port", type=int, default=8765)
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     """Run the selected command and return a process exit code."""
     args = build_parser().parse_args(argv)
+    if args.command == "factory-editor":
+        from .web.server import main as editor_main
+
+        return editor_main(
+            ["--config", args.factory, "--host", args.host, "--port", str(args.port)]
+        )
     if args.command == "report":
         if args.output:
             generate_markdown_report(args.input, args.output)

@@ -3,7 +3,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from pydantic import ValidationError
 
-from asteria_contracts import (
+from sylvapapers_contracts import (
     DemandForecast,
     ForecastPoint,
     ProcessEdge,
@@ -15,7 +15,7 @@ from asteria_contracts import (
     SimulationScenario,
     export_json_schemas,
 )
-from asteria_contracts.models import FactoryConfig, FailureDensityConfig, ProductDefinition
+from sylvapapers_contracts.models import FactoryConfig, FailureDensityConfig, ProductDefinition
 
 NOW = datetime(2026, 9, 7, tzinfo=UTC)
 
@@ -45,7 +45,7 @@ def test_sensor_record_requires_units_for_every_value() -> None:
 def test_forecast_quantiles_are_ordered() -> None:
     point = ForecastPoint(
         period_start=NOW,
-        product_id="panel-a",
+        product_id="paper-roll-a",
         p10=10,
         p50=15,
         p90=20,
@@ -62,7 +62,7 @@ def test_forecast_quantiles_are_ordered() -> None:
     with pytest.raises(ValidationError, match="p10 <= p50 <= p90"):
         ForecastPoint(
             period_start=NOW,
-            product_id="panel-a",
+            product_id="paper-roll-a",
             p10=20,
             p50=15,
             p90=10,

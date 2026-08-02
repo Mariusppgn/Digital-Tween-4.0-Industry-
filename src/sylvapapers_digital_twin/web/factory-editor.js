@@ -707,7 +707,7 @@ async function start() {
     render();
     status("Configuration chargée. Les positions sont enregistrées dans chaque étape.");
   } catch (error) {
-    status(`Chargement impossible : ${error.message}. Lancez l'éditeur avec python -m asteria_digital_twin.web.`, true);
+    status(`Chargement impossible : ${error.message}. Lancez l'éditeur avec python -m sylvapapers_digital_twin.web.`, true);
   }
 }
 

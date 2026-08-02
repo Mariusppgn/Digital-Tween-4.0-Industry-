@@ -1,6 +1,6 @@
 """Local, dependency-free factory process editor.
 
-Run ``python -m asteria_digital_twin.web`` from the repository root and open
+Run ``python -m sylvapapers_digital_twin.web`` from the repository root and open
 the printed local URL.  The editor reads the validated factory contract from
 ``configs/factory.yaml`` by default and exports contract-compatible JSON.
 """

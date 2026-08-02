@@ -13,7 +13,7 @@ from urllib.parse import urlsplit
 
 import yaml
 
-from asteria_contracts import FactoryConfig, load_factory_config
+from sylvapapers_contracts import FactoryConfig, load_factory_config
 
 EDITOR_ROOT: Final = Path(__file__).resolve().parent
 ASSETS: Final = {
@@ -135,7 +135,7 @@ def make_server(
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Serve the local SylvaPape factory editor")
+    parser = argparse.ArgumentParser(description="Serve the local SylvaPapers factory editor")
     parser.add_argument("--config", default="configs/factory.yaml", help="Factory JSON/YAML file")
     parser.add_argument("--host", default="127.0.0.1", help="Bind address (local by default)")
     parser.add_argument("--port", type=int, default=8765, help="TCP port")

@@ -7,8 +7,8 @@ from pathlib import Path
 
 import networkx as nx
 
-from asteria_contracts import load_factory_config, load_simulation_scenario
-from asteria_digital_twin import calculate_kpis, save_result, simulate
+from sylvapapers_contracts import load_factory_config, load_simulation_scenario
+from sylvapapers_digital_twin import calculate_kpis, save_result, simulate
 
 ROOT = Path(__file__).resolve().parents[1]
 

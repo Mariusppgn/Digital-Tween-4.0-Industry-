@@ -14,7 +14,7 @@
           "type": "string"
         },
         "provenance": {
-          "default": "asteria",
+          "default": "sylvapapers",
           "minLength": 1,
           "title": "Provenance",
           "type": "string"
@@ -25,7 +25,7 @@
           "type": "number"
         },
         "quantity_unit": {
-          "default": "panel",
+          "default": "roll",
           "minLength": 1,
           "title": "Quantity Unit",
           "type": "string"
@@ -62,7 +62,7 @@
           "type": "array"
         },
         "provenance": {
-          "default": "asteria",
+          "default": "sylvapapers",
           "minLength": 1,
           "title": "Provenance",
           "type": "string"
@@ -104,6 +104,11 @@
           "title": "Cycle Time Minutes",
           "type": "object"
         },
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
         "metadata": {
           "additionalProperties": true,
           "title": "Metadata",
@@ -120,7 +125,7 @@
           "type": "string"
         },
         "provenance": {
-          "default": "asteria",
+          "default": "sylvapapers",
           "minLength": 1,
           "title": "Provenance",
           "type": "string"
@@ -129,7 +134,6 @@
           "items": {
             "type": "string"
           },
-          "minItems": 1,
           "title": "Routing",
           "type": "array"
         },
@@ -140,7 +144,7 @@
           "type": "string"
         },
         "unit": {
-          "default": "panel",
+          "default": "roll",
           "minLength": 1,
           "title": "Unit",
           "type": "string"
@@ -148,8 +152,7 @@
       },
       "required": [
         "product_id",
-        "name",
-        "routing"
+        "name"
       ],
       "title": "ProductDefinition",
       "type": "object"
@@ -180,7 +183,7 @@
           "type": "string"
         },
         "provenance": {
-          "default": "asteria",
+          "default": "sylvapapers",
           "minLength": 1,
           "title": "Provenance",
           "type": "string"
@@ -191,7 +194,7 @@
           "type": "integer"
         },
         "quantity_unit": {
-          "default": "panel",
+          "default": "roll",
           "minLength": 1,
           "title": "Quantity Unit",
           "type": "string"
@@ -258,13 +261,6 @@
       "title": "Interarrival Time",
       "type": "number"
     },
-    "max_reworks": {
-      "default": 1,
-      "maximum": 5,
-      "minimum": 0,
-      "title": "Max Reworks",
-      "type": "integer"
-    },
     "name": {
       "minLength": 1,
       "title": "Name",
@@ -286,7 +282,7 @@
       "type": "array"
     },
     "provenance": {
-      "default": "asteria",
+      "default": "sylvapapers",
       "minLength": 1,
       "title": "Provenance",
       "type": "string"

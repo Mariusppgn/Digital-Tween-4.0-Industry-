@@ -1,4 +1,4 @@
-"""NetworkX process-graph adapter for ``asteria_contracts`` models."""
+"""NetworkX process-graph adapter for ``sylvapapers_contracts`` models."""
 
 from __future__ import annotations
 
@@ -48,9 +48,8 @@ def node_id(value: Any) -> str:
 def build_process_graph(factory: Any) -> nx.DiGraph[str]:
     """Build a validated directed process graph from a contract or mapping.
 
-    Cycles are accepted because the reference factory contains a bounded quality
-    rework loop. Product routings prevent the simulator from following that loop
-    indefinitely.
+    The public contract rejects dangling edges and self-loops. The SylvaPapers
+    reference graph is acyclic so every product route terminates.
     """
     config = mapping(factory)
     machines = items(config.get("machines"))

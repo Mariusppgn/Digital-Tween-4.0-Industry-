@@ -40,7 +40,7 @@ class GraphPosition(BaseModel):
 
 class ProcessNode(ContractModel):
     node_id: str = Field(min_length=1)
-    kind: Literal["source", "operation", "buffer", "quality_control", "rework", "sink"]
+    kind: Literal["source", "operation", "buffer", "quality_control", "sink"]
     name: str = Field(min_length=1)
     machine_ids: list[str] = Field(default_factory=list)
     capacity: float | None = Field(default=None, gt=0)
@@ -183,7 +183,7 @@ class ProductDefinition(ContractModel):
     product_id: str = Field(min_length=1)
     name: str = Field(min_length=1)
     enabled: bool = True
-    unit: str = Field(default="panel", min_length=1)
+    unit: str = Field(default="roll", min_length=1)
     routing: list[str] = Field(default_factory=list)
     cycle_time_minutes: dict[str, float] = Field(default_factory=dict)
     bill_of_materials: dict[str, float] = Field(default_factory=dict)
@@ -202,7 +202,7 @@ class ProductionOrder(ContractModel):
     order_id: str = Field(min_length=1)
     product_id: str = Field(min_length=1)
     quantity: int = Field(gt=0)
-    quantity_unit: str = Field(default="panel", min_length=1)
+    quantity_unit: str = Field(default="roll", min_length=1)
     release_at: datetime
     due_at: datetime
     priority: int = Field(default=1, ge=1, le=10)
@@ -218,7 +218,7 @@ class DemandPoint(ContractModel):
     period_start: datetime
     product_id: str = Field(min_length=1)
     quantity: float = Field(ge=0)
-    quantity_unit: str = Field(default="panel", min_length=1)
+    quantity_unit: str = Field(default="roll", min_length=1)
 
 
 class DemandScenario(ContractModel):
@@ -238,7 +238,6 @@ class SimulationScenario(ContractModel):
     demand: DemandScenario | None = None
     random_seed: int = Field(default=42, ge=0)
     fidelity: Literal["fast", "standard", "research"] = "fast"
-    max_reworks: int = Field(default=1, ge=0, le=5)
     interarrival_time: float = Field(default=0, ge=0)
 
     @model_validator(mode="after")
@@ -357,7 +356,7 @@ class ForecastPoint(ContractModel):
     p10: float = Field(ge=0)
     p50: float = Field(ge=0)
     p90: float = Field(ge=0)
-    quantity_unit: str = Field(default="panel", min_length=1)
+    quantity_unit: str = Field(default="roll", min_length=1)
 
     @model_validator(mode="after")
     def validate_quantiles(self) -> ForecastPoint:

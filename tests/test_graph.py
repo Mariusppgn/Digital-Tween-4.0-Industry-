@@ -1,4 +1,4 @@
-from asteria_digital_twin import DigitalTwinSimulator, build_process_graph
+from sylvapapers_digital_twin import DigitalTwinSimulator, build_process_graph
 
 
 def test_graph_preserves_material_flow_attributes() -> None:

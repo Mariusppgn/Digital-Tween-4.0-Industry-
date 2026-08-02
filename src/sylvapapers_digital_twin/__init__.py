@@ -1,4 +1,4 @@
-"""Minimal executable digital twin for Asteria Composites Lab."""
+"""Executable paper-mill digital twin for SylvaPapers."""
 
 from .graph import build_process_graph
 from .kpi import KPI_NAMES, calculate_kpis

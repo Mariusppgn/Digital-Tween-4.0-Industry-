@@ -1,0 +1,25 @@
+{
+  "project": "SylvaPapers",
+  "delivery": "factory",
+  "status": "implemented_and_validated",
+  "data_status": "synthetic_engineering_hypotheses_not_calibrated",
+  "products": {
+    "configured": 3,
+    "enabled_by_default": 2
+  },
+  "reliability": {
+    "family": "weibull",
+    "parameters": ["shape", "scale_hours"],
+    "age_unit": "operating_hours"
+  },
+  "recycling": false,
+  "quality_losses_measured": true,
+  "editor": {
+    "local_web": true,
+    "language": "fr",
+    "undo_redo": true,
+    "duplication": true,
+    "auto_layout": true,
+    "explicit_validated_write": true
+  }
+}

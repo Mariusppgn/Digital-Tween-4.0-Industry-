@@ -1,16 +1,19 @@
-.PHONY: install validate simulate report test lint format typecheck check
+.PHONY: install validate simulate editor report test lint format typecheck check
 
 install:
 	uv sync --extra dev
 
 validate:
-	uv run asteria validate-config --config configs/scenarios/baseline.yaml
+	uv run sylvapapers validate-config --config configs/scenarios/baseline.yaml
 
 simulate:
-	uv run asteria simulate --config configs/scenarios/baseline.yaml --output outputs/baseline
+	uv run sylvapapers simulate --config configs/scenarios/baseline.yaml --output outputs/baseline
+
+editor:
+	uv run sylvapapers factory-editor --factory configs/factory.yaml
 
 report:
-	uv run asteria report --input outputs/baseline --output reports/generated
+	uv run sylvapapers report --input outputs/baseline --output reports/generated
 
 test:
 	uv run pytest
@@ -25,4 +28,3 @@ typecheck:
 	uv run mypy
 
 check: lint typecheck test
-

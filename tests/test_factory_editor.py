@@ -8,8 +8,8 @@ from pathlib import Path
 import pytest
 from pydantic import TypeAdapter
 
-from asteria_contracts import FactoryConfig
-from asteria_digital_twin.web import asset_path, factory_payload, make_server
+from sylvapapers_contracts import FactoryConfig
+from sylvapapers_digital_twin.web import asset_path, factory_payload, make_server
 
 ROOT = Path(__file__).resolve().parents[1]
 

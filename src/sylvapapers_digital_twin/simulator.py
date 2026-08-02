@@ -33,7 +33,6 @@ class MachineState:
     shared_resource: str | None = None
     shared_capacity: int = 1
     quality_control: bool = False
-    rework_to: str | None = None
     duration_cv: float = 0.0
     setup_time: float = 0.0
     maintenance_recovery: float = 0.5
@@ -184,7 +183,6 @@ class DigitalTwinSimulator:
                     meta.get("is_quality_control")
                     or kind in {"qc", "quality", "quality_control", "inspection"}
                 ),
-                rework_to=meta.get("rework_to") or data.get("rework_to"),
                 duration_cv=float(meta.get("duration_cv") or 0),
                 setup_time=float(meta.get("setup_time") or 0),
                 maintenance_recovery=float(meta.get("maintenance_recovery") or 0.5),
@@ -270,8 +268,7 @@ class DigitalTwinSimulator:
             candidates = [
                 (current, target, data)
                 for _, target, data in self.graph.out_edges(current, data=True)
-                if self.graph.nodes[target].get("kind") != "rework"
-                and (current, target) not in visited
+                if (current, target) not in visited
             ]
             if not candidates:
                 raise ValueError(f"No terminating product route from process node {current!r}")
@@ -458,9 +455,8 @@ class DigitalTwinSimulator:
             if not route:
                 raise ValueError("At least one process operation is required")
             cycle_times = mapping(product.get("cycle_time_minutes") or {})
-            now, index, reworks, first_pass, lost = (
+            now, index, first_pass, lost = (
                 float(job["release_time"]),
-                0,
                 0,
                 True,
                 False,
@@ -488,21 +484,6 @@ class DigitalTwinSimulator:
                     )
                     if failed:
                         first_pass = False
-                        if reworks < int(self.scenario.get("max_reworks") or 1):
-                            reworks += 1
-                            target = state.rework_to or route[0]
-                            if target not in route:
-                                raise ValueError(f"Unknown rework target {target!r}")
-                            self._log(
-                                "rework",
-                                now,
-                                job["job_id"],
-                                state.machine_id,
-                                rework_count=reworks,
-                                rework_to=target,
-                            )
-                            index = route.index(target)
-                            continue
                         lost = True
                         self._log(
                             "material_loss",
@@ -531,7 +512,6 @@ class DigitalTwinSimulator:
                     "cycle_time": round(now - float(job["release_time"]), 6),
                     "delay": round(delay, 6),
                     "on_time": delay == 0,
-                    "rework_count": reworks,
                     "first_pass": first_pass,
                     "accepted": not lost,
                     "material_loss": 1 if lost else 0,
@@ -551,7 +531,7 @@ class DigitalTwinSimulator:
                 "factory_id": self.factory.get("factory_id", "unknown"),
                 "scenario_id": self.scenario.get("scenario_id", "unknown"),
                 "schema_version": self.scenario.get("schema_version", "1.0.0"),
-                "code_version": "0.1.0",
+                "code_version": "0.2.0",
             },
         )
 

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from asteria_contracts import load_factory_config, load_simulation_scenario
+from sylvapapers_contracts import load_factory_config, load_simulation_scenario
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -62,7 +62,6 @@ def test_reference_scenario_has_three_configurable_paper_products() -> None:
         "linerboard-roll": False,
         "printing-paper-roll": True,
     }
-    assert scenario.max_reworks == 0
     assert {product.metadata["route_condition"] for product in scenario.products} == {
         "carton",
         "papier_impression",
