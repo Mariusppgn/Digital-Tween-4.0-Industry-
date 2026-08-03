@@ -159,6 +159,29 @@ def save_result(
                 "total_wip",
             ],
         ),
+        "recycling.csv": (
+            result.recycling_records,
+            [
+                "recycling_event_id",
+                "time_minutes",
+                "timestamp",
+                "job_id",
+                "product_id",
+                "source_node_id",
+                "return_to_node_id",
+                "quality_rejection_number",
+                "completed_recycle_loops",
+                "max_recycle_loops",
+                "input_quantity",
+                "recovered_quantity",
+                "unrecoverable_quantity",
+                "quantity_unit",
+                "configured_recovery_yield",
+                "recovery_attempted",
+                "outcome",
+                "synthetic",
+            ],
+        ),
     }
     for filename, (rows, fields) in detailed_tables.items():
         _csv(output / filename, rows, fields)
@@ -183,6 +206,7 @@ def save_result(
         "maintenance_intervention_count": len(result.maintenance_interventions),
         "queue_record_count": len(result.queue_history),
         "wip_record_count": len(result.work_in_progress),
+        "recycling_record_count": len(result.recycling_records),
         "machines": list(result.graph.nodes),
         "metadata": result.metadata,
         "environment": {
@@ -361,7 +385,8 @@ def generate_markdown_report(
         "",
         "- All baseline values and events are synthetic.",
         "- The model represents operational paper-mill flow, not detailed fibre or fluid physics.",
-        "- Quality rejects are measured as material losses; no recycling loop is simulated.",
+        "- Quality rejects can follow the explicitly configured, bounded recycling loop.",
+        "- Recycling yield is a seeded Bernoulli recovery hypothesis per simulated unit.",
         "- Human calendars and material inventories are simplified in this first delivery.",
         "",
     ]

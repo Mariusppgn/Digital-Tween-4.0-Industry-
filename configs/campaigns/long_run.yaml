@@ -1,0 +1,27 @@
+# Campagne longue portable : 30 réplications de 1 000 rouleaux, soit 30 000
+# rouleaux planifiés. L'horizon et les échéances sont étendus de 90 jours.
+# Toutes les valeurs restent synthétiques et non calibrées sur une usine réelle.
+schema_version: "1.0.0"
+campaign_id: sylvapapers-long-run-v1
+simulation_config: ../scenarios/baseline.yaml
+effective_scenario_id: sylvapapers-long-run-quarter-01
+order_quantity_multiplier: 100
+horizon_extension_days: 90
+# Cadence d'arrivée de 1,33 rouleau/heure : campagne de capacité nominale,
+# pas un test de surcharge instantanée.
+interarrival_time_minutes: 45
+campaign_purpose: baseline_capacity_operating_statistics
+# La réplication 4 (graine 1003) contient deux pannes simulées. Elle est gardée
+# comme échantillon de validation avec pannes pour B, pas comme trajectoire médiane.
+representative_replication: 4
+representative_selection_reason: failure_containing_sample_for_module_b_validation
+replications: 30
+seed_start: 1000
+seed_step: 1
+data_classification: synthetic_hypothesis_not_calibrated
+provenance: sylvapapers_discrete_event_simulation
+plot_kpis:
+  - quantity_produced
+  - service_rate
+  - material_loss_rate
+  - total_cost

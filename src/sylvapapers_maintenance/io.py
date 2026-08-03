@@ -42,6 +42,9 @@ class MaintenanceDataset:
     failure_events: list[FailureEvent] = field(default_factory=list)
     maintenance_interventions: list[MaintenanceIntervention] = field(default_factory=list)
     provenance: str = "module_a"
+    data_classification: str = "unknown"
+    source_schema_version: str = "unknown"
+    source_code_version: str = "unknown"
 
 
 def load_maintenance_config(path: str | Path | None = None) -> MaintenanceAnalysisConfig:
@@ -100,6 +103,27 @@ def _simulation_origin(directory: Path) -> datetime:
         except (json.JSONDecodeError, TypeError, ValueError):
             pass
     return datetime(1970, 1, 1, tzinfo=UTC)
+
+
+def _source_metadata(directory: Path) -> tuple[str, str, str]:
+    summary_path = directory / "summary.json"
+    if not summary_path.is_file():
+        return "unknown", "unknown", "unknown"
+    try:
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        metadata = summary.get("metadata") or {}
+        classification = str(
+            metadata.get("sensor_data_classification")
+            or metadata.get("data_classification")
+            or "unknown"
+        )
+        return (
+            classification,
+            str(metadata.get("schema_version") or "unknown"),
+            str(metadata.get("code_version") or "unknown"),
+        )
+    except (json.JSONDecodeError, TypeError, ValueError):
+        return "unknown", "unknown", "unknown"
 
 
 def _timestamp(row: dict[str, str], origin: datetime) -> datetime:
@@ -261,9 +285,13 @@ def load_module_a_outputs(directory: str | Path) -> MaintenanceDataset:
         raise ValueError(
             f"no sensor data found in {source}; expected sensors.csv or sensor_records.csv"
         )
+    data_classification, schema_version, code_version = _source_metadata(source)
     return MaintenanceDataset(
         sensor_records=sensors,
         machine_states=_load_machine_states(source, origin),
         failure_events=_load_failure_events(source, origin),
         maintenance_interventions=_load_maintenance_interventions(source, origin),
+        data_classification=data_classification,
+        source_schema_version=schema_version,
+        source_code_version=code_version,
     )

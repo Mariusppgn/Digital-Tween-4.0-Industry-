@@ -1,0 +1,124 @@
+{
+  "additionalProperties": false,
+  "description": "One leakage-free prediction evaluated against a future time window.",
+  "properties": {
+    "alert_lead_hours": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Alert Lead Hours"
+    },
+    "anomaly_score": {
+      "minimum": 0,
+      "title": "Anomaly Score",
+      "type": "number"
+    },
+    "anomaly_threshold": {
+      "exclusiveMinimum": 0,
+      "title": "Anomaly Threshold",
+      "type": "number"
+    },
+    "assessed_at": {
+      "format": "date-time",
+      "title": "Assessed At",
+      "type": "string"
+    },
+    "failure_probability": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Failure Probability",
+      "type": "number"
+    },
+    "horizon_hours": {
+      "exclusiveMinimum": 0,
+      "maximum": 8760,
+      "title": "Horizon Hours",
+      "type": "number"
+    },
+    "is_alert": {
+      "title": "Is Alert",
+      "type": "boolean"
+    },
+    "is_censored": {
+      "default": false,
+      "title": "Is Censored",
+      "type": "boolean"
+    },
+    "machine_id": {
+      "minLength": 1,
+      "title": "Machine Id",
+      "type": "string"
+    },
+    "method": {
+      "enum": [
+        "ewma_robust",
+        "cusum_robust"
+      ],
+      "title": "Method",
+      "type": "string"
+    },
+    "next_failure_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Next Failure At"
+    },
+    "observations_used": {
+      "maximum": 10000000,
+      "minimum": 1,
+      "title": "Observations Used",
+      "type": "integer"
+    },
+    "observed_failure": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Observed Failure"
+    },
+    "provenance": {
+      "default": "sylvapapers",
+      "minLength": 1,
+      "title": "Provenance",
+      "type": "string"
+    },
+    "schema_version": {
+      "default": "1.0.0",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "machine_id",
+    "assessed_at",
+    "method",
+    "anomaly_score",
+    "anomaly_threshold",
+    "is_alert",
+    "failure_probability",
+    "horizon_hours",
+    "observations_used"
+  ],
+  "title": "TemporalPrediction",
+  "type": "object"
+}

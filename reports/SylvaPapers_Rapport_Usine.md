@@ -16,7 +16,7 @@
 - trois produits configurables, dont le carton désactivé par défaut ;
 - branches de recette et machines redondantes ;
 - entrées/sorties matière explicites ;
-- aucune boucle de recyclage ou reprise ;
+- boucle de recyclage qualité ajoutée ultérieurement : retour vers la préparation de pâte, rendement synthétique 0,75 et deux passages maximum ;
 - pertes qualité mesurées ;
 - densité Weibull à deux paramètres par type de machine ;
 - âge exprimé en heures de fonctionnement ;

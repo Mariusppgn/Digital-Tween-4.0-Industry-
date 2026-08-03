@@ -27,6 +27,7 @@
       <div id="node-palette" class="palette-list"></div>
       <button id="add-machine" type="button">Ajouter une machine</button>
       <button id="edit-machine-types" type="button">Types et pannes</button>
+      <button id="edit-recycling" type="button">Boucle de recyclage</button>
       <p class="keyboard-help"><strong>Clavier :</strong> flèches pour déplacer l’étape sélectionnée, Maj + flèches pour 20 px, Suppr pour retirer.</p>
     </aside>
 
@@ -137,6 +138,24 @@
     <p id="type-error" class="form-error" role="alert"></p>
     <div class="dialog-actions">
       <button type="button" data-close="type-dialog">Annuler</button>
+      <button type="submit">Enregistrer</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="recycling-dialog" aria-labelledby="recycling-dialog-title">
+  <form id="recycling-form" method="dialog">
+    <h2 id="recycling-dialog-title">Boucle de recyclage qualité</h2>
+    <label><span>Activer la rétroaction</span><input id="recycling-enabled" type="checkbox"></label>
+    <label>Départ (contrôle qualité) <select id="recycling-source" required></select></label>
+    <label>Retour vers l'opération <select id="recycling-target" required></select></label>
+    <label>Rendement de récupération [0–1] <input id="recycling-yield" type="number" min="0" max="1" step="0.01" required></label>
+    <label>Nombre maximal de boucles <input id="recycling-max-loops" type="number" min="1" max="20" step="1" required></label>
+    <label>Unité comptable <input id="recycling-unit" required value="roll_equivalent"></label>
+    <p class="muted">Le rendement est une hypothèse probabiliste synthétique par unité. La limite de boucles garantit la terminaison.</p>
+    <p id="recycling-error" class="form-error" role="alert"></p>
+    <div class="dialog-actions">
+      <button type="button" data-close="recycling-dialog">Annuler</button>
       <button type="submit">Enregistrer</button>
     </div>
   </form>

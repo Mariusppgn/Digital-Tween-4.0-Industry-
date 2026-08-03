@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sylvapapers-digital-twin"
-version = "0.3.0"
+version = "0.4.0"
 description = "A configurable paper-mill digital twin with visual process editing and Weibull reliability."
 readme = "README.md"
 requires-python = ">=3.12"

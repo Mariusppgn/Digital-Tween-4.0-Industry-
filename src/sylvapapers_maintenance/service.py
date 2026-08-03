@@ -21,6 +21,7 @@ from .anomaly import ewma_robust_anomaly
 from .economics import compare_maintenance_policies
 from .io import MaintenanceDataset, load_maintenance_config, load_module_a_outputs
 from .reliability import estimate_reliability
+from .validation import TemporalValidationResult, backtest_temporal_alerts
 
 
 @dataclass(frozen=True)
@@ -30,6 +31,8 @@ class MaintenanceAnalysisResult:
     assessments: list[MaintenanceAssessment]
     sensor_records: list[SensorRecord]
     config: MaintenanceAnalysisConfig
+    temporal_validation: TemporalValidationResult
+    dataset: MaintenanceDataset
 
 
 def _latest_operating_age(machine_id: str, dataset: MaintenanceDataset) -> float:
@@ -189,6 +192,8 @@ def analyze_dataset(
         assessments=assessments,
         sensor_records=dataset.sensor_records,
         config=config,
+        temporal_validation=backtest_temporal_alerts(dataset, config),
+        dataset=dataset,
     )
 
 

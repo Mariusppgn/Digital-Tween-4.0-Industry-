@@ -24,10 +24,12 @@ L'activation est explicite. Une commande visant un produit désactivé est inval
 
 ## 4. Matières et pertes
 
-Chaque nœud liste ses entrées et sorties matière. Le simulateur léger suit des rouleaux plutôt qu'un
-bilan massique continu. Les rejets sont des pertes quittant le procédé ; recyclage, reprise et
-récupération des cassés sont exclus volontairement. C'est une frontière de modélisation, pas la
-description d'une pratique recommandée en papèterie.
+Chaque nœud liste ses entrées et sorties matière. Le simulateur léger suit des équivalents-rouleaux
+plutôt qu'un bilan massique continu. Les rejets qualité éligibles entrent dans une boucle contrôlée
+vers la préparation de pâte : chaque passage utilise une probabilité de récupération de Bernoulli
+avec graine de 0,75 et la politique de référence autorise au plus deux passages. Les récupérations
+échouées et les boucles épuisées deviennent des pertes finales. Cette hypothèse unitaire n'est pas un
+bilan massique des fibres, de l'humidité ou des cassés ni la description d'une pratique recommandée.
 
 ## 5. Machines et capacité
 

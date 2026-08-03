@@ -35,15 +35,15 @@ l'analyse de maintenance ne puisse écraser ses preuves sources.
 
 ## 5. Politique algorithmique
 
-EWMA, seuils robustes et calculs Weibull fermés sont les baselines pour portable. Les méthodes CUSUM,
+EWMA, CUSUM robuste et calculs Weibull fermés sont les baselines pour portable. Les méthodes de
 survie, espace-état ou apprentissage facultatives doivent partager les mêmes contrats, exposer leur
 coût et rester désactivées en `fast`.
 
 ## 6. Gardes de terminaison
 
-Les gammes doivent atteindre un puits. L'usine ne contient aucun recyclage ou reprise. Horizon,
-commandes et taille de sortie sont bornés par la configuration validée ; l'entrée maintenance doit
-être un paquet fini et complet.
+Les gammes directes doivent atteindre un puits. Le seul cycle est l'arête explicite de recyclage QC,
+bornée par un nombre maximal de passages validé. Horizon, commandes et taille de sortie sont bornés
+par la configuration validée ; l'entrée maintenance doit être un paquet fini et complet.
 
 ## 7. Mesure
 

@@ -607,6 +607,16 @@ machines:
 process_graph:
   schema_version: 1.0.0
   provenance: synthetic-papermaking-process-hypotheses
+  recycling:
+    schema_version: 1.0.0
+    provenance: synthetic-recycling-hypothesis-not-calibrated
+    enabled: true
+    source_node_id: quality-control
+    return_to_node_id: stock-preparation
+    recovery_yield: 0.75
+    max_loops: 2
+    quantity_unit: roll_equivalent
+    assumptions_are_synthetic: true
   nodes:
   - schema_version: 1.0.0
     provenance: sylvapapers
@@ -1034,6 +1044,14 @@ process_graph:
     condition: non_conforme
     probability: 0.08
     material: rouleaux_non_conformes
+  - schema_version: 1.0.0
+    provenance: synthetic-recycling-hypothesis-not-calibrated
+    source: quality-control
+    target: stock-preparation
+    relation: recycle
+    condition: non_conforme_recuperable
+    probability: 0.75
+    material: pate_recyclee
 resource_calendars:
 - schema_version: 1.0.0
   provenance: sylvapapers

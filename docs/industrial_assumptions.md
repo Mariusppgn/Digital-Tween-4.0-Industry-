@@ -24,9 +24,11 @@ Activation is explicit. An order for a disabled product is invalid.
 ## 4. Materials and losses
 
 Each process node lists plain-language input and output materials. The lightweight simulator follows
-roll entities rather than continuous mass balances. QC rejects are losses and leave the process;
-recycling, rework and internal broke recovery are deliberately excluded. This is a modelling
-boundary, not a description of recommended mill practice.
+roll-equivalent entities rather than continuous mass balances. Eligible QC rejects enter a controlled
+feedback loop to stock preparation: each pass uses a seeded Bernoulli recovery probability of 0.75
+and the reference policy permits at most two passes. Failed recoveries and exhausted loops become
+final losses. This unit-level hypothesis is not a fibre, moisture or broke mass balance and is not a
+description of recommended mill practice.
 
 ## 5. Machines and capacity
 

@@ -14,9 +14,12 @@ keeps both modules independently executable through persisted, versioned data co
 | Seeded discrete-event production | Implemented | reproducible events, jobs, KPI and final state |
 | Operating-age Weibull failures | Implemented | machine-specific age, failures and downtime |
 | Synthetic degradation and sensors | Implemented | timestamped sensor and state exports |
-| Interpretable maintenance analysis | Implemented | EWMA, robust thresholds, Weibull risk and RUL |
+| Controlled quality recycling | Implemented | bounded QC-to-stock-preparation feedback and conservation counters |
+| Long statistical campaign | Implemented | 30 × 1,000 rolls, 15 KPI distributions and 95% confidence intervals |
+| Interpretable maintenance analysis | Implemented | EWMA/CUSUM, robust thresholds, Weibull risk and RUL |
 | Maintenance recommendations | Implemented | machine-level alert, rationale and intervention window |
 | Economic policy comparison | Implemented baseline | corrective, preventive and predictive synthetic costs |
+| Leakage-free temporal validation | Implemented baseline | rolling origins, censoring, confusion and calibration exports |
 | Industrial calibration | Not implemented | approved mill histories are required |
 | Advanced survival or ML models | Planned only | must outperform the interpretable baseline |
 | Closed-loop equipment control | Explicitly out of scope | advisory output and human review only |
@@ -38,6 +41,7 @@ analysis, not to reproduce fine fibre, fluid or thermal physics.
 | Simulation seed and horizon | reproducibility and termination | explicit experiment setting |
 | Process, quality, energy and cost parameters | event duration and KPI | synthetic engineering assumption |
 | Maintenance recovery and repair parameters | virtual-age and availability effects | synthetic engineering assumption |
+| Recycling policy | return edge, recovery yield and maximum loop count | synthetic engineering assumption |
 
 ### 3.3 Outputs
 
@@ -51,6 +55,7 @@ analysis, not to reproduce fine fibre, fluid or thermal physics.
 | `maintenance.csv` | completed maintenance actions and effects |
 | `queues.csv` | queue observations by process step |
 | `work_in_progress.csv` | timestamped WIP observations |
+| `recycling.csv` | every recovery attempt, outcome, pass count and final-loss reason |
 | `kpis.json` | aggregated production, quality, downtime, cost and energy indicators |
 | `final_state.json` | terminal machine, queue and production state |
 | `summary.json` | seed, versions, runtime, configuration and result counts |
@@ -59,6 +64,21 @@ analysis, not to reproduce fine fibre, fluid or thermal physics.
 The sensor channels are `load_ratio`, `temperature_c`, `vibration_mm_s`, `pressure_bar`,
 `power_kw`, `operating_age_hours` and `degradation_index`. They are generated from the simulation
 state and synthetic noise; they are not physical measurements.
+
+The reference feedback loop goes from `quality-control` to `stock-preparation`. Its configured yield
+of `0.75` is applied as a seeded Bernoulli recovery probability to each rejected `roll_equivalent`,
+with `max_loops: 2`. Recovered units re-enter all downstream operations. Unrecovered units and those
+reaching the loop limit are final losses. The implementation conserves unit entities and counts
+internal recycled throughput, but it does not model continuous fibre mass, moisture or pulp yield.
+
+### 3.4 Long-run statistics
+
+`configs/campaigns/long_run.yaml` defines 30 independent replications, 1,000 planned jobs per
+replication, 45-minute inter-arrivals and a 90-day horizon extension. The campaign computes 15 KPI
+distributions, R-7 empirical quantiles and a normal-approximation 95% confidence interval for each
+mean. It also exports product-by-replication and machine-by-replication evidence. Replication 4,
+seed 1003, is retained for Module B because it contains two failures; this deliberate event-bearing
+selection is not a claim that the sample is statistically representative.
 
 ## 4. Module B — predictive maintenance
 
@@ -84,13 +104,16 @@ recommendation traceable to simple, reviewable methods.
 | Method | Baseline role | Interpretation limit |
 |---|---|---|
 | EWMA | smooth sensor deviations and retain recent drift | not a causal diagnosis |
+| Robust two-sided CUSUM | detect persistent positive or negative shifts | shares the same frozen reference-window limitation as EWMA |
 | Robust threshold | flag scores relative to resistant location and scale | depends on baseline representativeness |
 | Conditional Weibull risk | estimate failure probability over the horizon from current age | assumes the configured Weibull family |
 | Weibull RUL | estimate remaining operating life and uncertainty | not calendar life and not independently calibrated |
 | Rule-based recommendation | map evidence and criticality to urgency and action | advisory, not an automatic work order |
 | Economic baseline | compare corrective, preventive and predictive expected cost | uses synthetic cost parameters |
+| Rolling-origin backtest | compute TP, FP, TN, FN, precision, recall, F1 and alert lead time without future features | overlapping windows are correlated and right-censored windows are excluded |
+| Probability calibration | compare conditional Weibull risk with observed failures in equal-width bins | descriptive with small samples or few failures |
 
-Advanced methods such as CUSUM, Cox models, isolation forests, state-space models and conformal
+Advanced methods such as Cox models, isolation forests, state-space models and conformal
 prediction remain candidates. They are not part of the baseline and must demonstrate measurable
 value beyond these methods before adoption.
 
@@ -100,11 +123,25 @@ value beyond these methods before adoption.
 |---|---|
 | `maintenance_assessments.json` | anomaly, risk, RUL and recommendation per machine |
 | `maintenance_policy_costs.csv` | corrective, preventive and predictive economic comparison |
+| `temporal_predictions.csv` | flat rolling-origin predictions, outcomes and censoring flags |
+| `temporal_validation_metrics.csv` | EWMA/CUSUM confusion metrics, Brier score and event lead time |
+| `probability_calibration.csv` | non-empty Weibull probability bins and observed failure frequency |
+| `machine_decision_features.csv` | flat risk, policy, cost and capacity-impact features for Modules C/D/E |
+| `module_b_manifest.json` | schema versions, provenance, units, filenames and known limitations |
 | `sensor_anomalies.png` | normalized sensor trends and latest anomaly flags |
 | `failure_risk_rul.png` | conditional failure risk and RUL intervals |
 | `maintenance_policy_costs.png` | expected policy cost by machine |
+| `temporal_validation.png` | EWMA/CUSUM precision, recall and F1 on uncensored windows |
+| `probability_calibration.png` | predicted Weibull risk against observed failure frequency |
 
 Output identifiers remain technical English even when reports are presented in French.
+
+Every campaign interoperability CSV carries `schema_version`, `producer_version`, `provenance` and
+`data_classification`.
+Probability and capacity fields use ratios, RUL uses operating hours, alert lead time uses calendar
+hours, and monetary fields state their currency. These files are self-describing inputs intended for
+copying into separate Module D and E repositories; consumers should verify the adjacent manifest
+before ingestion.
 
 ## 5. Module A to B sequence
 
@@ -118,7 +155,7 @@ sequenceDiagram
     Config->>A: factory, orders, seed, horizon
     A->>Store: states, sensors, failures, interventions
     Store->>B: contract-validated inputs
-    B->>B: EWMA + Weibull + economic comparison
+    B->>B: EWMA/CUSUM + Weibull + temporal and economic evaluation
     B->>Human: risk, RUL, recommendation and rationale
     Human-->>Config: approved future policy change
 ```
@@ -132,6 +169,7 @@ production schedule.
 uv run sylvapapers validate-config --config configs/scenarios/baseline.yaml
 uv run sylvapapers simulate --config configs/scenarios/baseline.yaml --output outputs/baseline
 uv run sylvapapers maintenance --input outputs/baseline --output outputs/maintenance
+uv run sylvapapers campaign --config configs/campaigns/long_run.yaml --output outputs/long-run-statistics
 ```
 
 For an explicit maintenance scenario:
@@ -180,9 +218,10 @@ flowchart LR
     E -->|parameter changes| A
 ```
 
-The monorepo is retained for fast development and atomic contract changes. Package boundaries,
-versioned schemas and file-based exchanges allow later repository separation without changing the
-business interfaces.
+This repository remains the home of Modules A and B. Modules D and E will be implemented in
+separate repositories and will consume copied, versioned CSV/JSON artefacts only. Package boundaries,
+versioned schemas, manifests and file-based exchanges prevent those future repositories from
+depending on simulator or maintenance internals.
 
 ## 9. Deferred work
 
@@ -190,8 +229,8 @@ business interfaces.
 - enforced shifts, workforce skills and maintenance windows;
 - interruption policies for failures occurring during an operation;
 - censored-data estimation of Weibull coefficients from approved plant histories;
-- time-aware backtesting, calibration curves and temporal confusion matrices;
-- CUSUM, Cox, state-space, conformal or ML comparisons;
+- industrial out-of-sample validation across several failure modes and operating regimes;
+- Cox, state-space, conformal or ML comparisons;
 - Module C production and technician optimization;
 - Module D capacity-aware marketing optimization;
 - Module E stochastic R&D portfolio optimization.

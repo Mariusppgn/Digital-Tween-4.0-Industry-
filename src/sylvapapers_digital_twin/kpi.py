@@ -13,6 +13,10 @@ KPI_NAMES = (
     "utilization_rate",
     "defect_rate",
     "material_loss_rate",
+    "final_material_loss_rate",
+    "recycling_attempts",
+    "recycled_quantity",
+    "recycling_recovery_rate",
     "downtime",
     "total_cost",
     "energy_consumption",
@@ -36,6 +40,13 @@ def calculate_kpis(result: SimulationResult) -> dict[str, float]:
     downtime = sum(float(event.get("duration", 0)) for event in failures)
     utilization = productive / available_minutes if available_minutes else 0.0
     defect_rate = len(defects) / len(checks) if checks else 0.0
+    recycling_attempts = sum(
+        bool(record.get("recovery_attempted", False)) for record in result.recycling_records
+    )
+    recycled_quantity = sum(
+        float(record.get("recovered_quantity", 0)) for record in result.recycling_records
+    )
+    final_material_loss = sum(float(job.get("final_material_loss", 0)) for job in jobs)
     availability = max(0.0, 1 - downtime / available_minutes) if available_minutes else 0.0
     # Performance is deliberately simple for this first executable baseline.
     performance = min(1.0, utilization)
@@ -54,6 +65,14 @@ def calculate_kpis(result: SimulationResult) -> dict[str, float]:
             sum(float(job.get("material_loss", 0)) for job in jobs) / released_quantity
             if released_quantity
             else 0.0
+        ),
+        "final_material_loss_rate": (
+            final_material_loss / released_quantity if released_quantity else 0.0
+        ),
+        "recycling_attempts": recycling_attempts,
+        "recycled_quantity": recycled_quantity,
+        "recycling_recovery_rate": (
+            recycled_quantity / recycling_attempts if recycling_attempts else 0.0
         ),
         "downtime": downtime,
         "total_cost": sum(float(event.get("cost", 0)) for event in result.events),

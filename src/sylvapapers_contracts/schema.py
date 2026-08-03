@@ -15,6 +15,7 @@ def contract_types() -> dict[str, type[ContractModel]]:
     names = (
         "FactoryConfig",
         "ProcessGraph",
+        "RecyclingConfig",
         "FailureDensityConfig",
         "MachineTypeConfig",
         "MachineConfig",
@@ -33,6 +34,9 @@ def contract_types() -> dict[str, type[ContractModel]]:
         "MaintenanceIntervention",
         "MaintenanceRecommendation",
         "MaintenanceAssessment",
+        "TemporalPrediction",
+        "TemporalValidationMetrics",
+        "ProbabilityCalibrationBin",
         "ResourceCalendar",
         "ProductionSchedule",
         "MarketingPlan",

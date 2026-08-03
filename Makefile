@@ -1,4 +1,4 @@
-.PHONY: install validate simulate maintenance editor report test lint format typecheck check
+.PHONY: install validate simulate campaign exchange maintenance editor report test lint format typecheck check
 
 install:
 	uv sync --extra dev
@@ -8,6 +8,14 @@ validate:
 
 simulate:
 	uv run sylvapapers simulate --config configs/scenarios/baseline.yaml --output outputs/baseline
+
+campaign:
+	uv run sylvapapers campaign --config configs/campaigns/long_run.yaml --output outputs/long-run
+
+exchange:
+	uv run sylvapapers campaign --config configs/campaigns/long_run.yaml --output outputs/long-run-statistics
+	uv run sylvapapers maintenance --input outputs/long-run-statistics/representative_module_a --output outputs/long-run-maintenance --config configs/maintenance/baseline.yaml
+	uv run sylvapapers prepare-exchange --campaign outputs/long-run-statistics --maintenance outputs/long-run-maintenance --output exports/sylvapapers-handoff-v1
 
 maintenance: simulate
 	uv run sylvapapers maintenance --input outputs/baseline --output outputs/maintenance

@@ -15,9 +15,12 @@ données persistés et versionnés.
 | Production à événements discrets avec graine | Implémenté | événements, jobs, KPI et état final reproductibles |
 | Pannes Weibull selon l'âge de marche | Implémenté | âge, pannes et arrêts propres à chaque machine |
 | Dégradation et capteurs synthétiques | Implémenté | exports horodatés des capteurs et états |
-| Analyse de maintenance interprétable | Implémenté | EWMA, seuils robustes, risque Weibull et RUL |
+| Recyclage qualité contrôlé | Implémenté | rétroaction bornée du contrôle qualité vers la préparation de pâte et compteurs de conservation |
+| Campagne statistique longue | Implémenté | 30 × 1 000 rouleaux, distributions de 15 KPI et intervalles de confiance à 95 % |
+| Analyse de maintenance interprétable | Implémenté | EWMA/CUSUM, seuils robustes, risque Weibull et RUL |
 | Recommandations de maintenance | Implémenté | alerte, justification et fenêtre par machine |
 | Comparaison économique des politiques | Baseline implémentée | coûts synthétiques corrective, préventive et prédictive |
+| Validation temporelle sans fuite | Baseline implémentée | origines glissantes, censure, confusion et exports d'étalonnage |
 | Étalonnage industriel | Non implémenté | historiques approuvés de papèterie nécessaires |
 | Modèles avancés de survie ou ML | Prévus seulement | doivent dépasser la baseline interprétable |
 | Commande d'équipements en boucle fermée | Explicitement hors périmètre | sortie consultative et revue humaine uniquement |
@@ -39,6 +42,7 @@ cohérentes, pas de reproduire finement la physique des fibres, fluides ou trans
 | Graine et horizon | reproductibilité et terminaison | réglage explicite de l'expérience |
 | Paramètres procédé, qualité, énergie et coût | durées d'événement et KPI | hypothèse d'ingénierie synthétique |
 | Paramètres de récupération et réparation | effets sur l'âge virtuel et la disponibilité | hypothèse d'ingénierie synthétique |
+| Politique de recyclage | arête de retour, rendement de récupération et nombre maximal de boucles | hypothèse d'ingénierie synthétique |
 
 ### 3.3 Sorties
 
@@ -52,6 +56,7 @@ cohérentes, pas de reproduire finement la physique des fibres, fluides ou trans
 | `maintenance.csv` | actions de maintenance terminées et effets |
 | `queues.csv` | observations des files par étape |
 | `work_in_progress.csv` | observations horodatées des encours |
+| `recycling.csv` | chaque tentative de récupération, résultat, nombre de passages et motif de perte finale |
 | `kpis.json` | indicateurs agrégés de production, qualité, arrêt, coût et énergie |
 | `final_state.json` | état terminal des machines, files et production |
 | `summary.json` | graine, versions, durée, configuration et comptes |
@@ -60,6 +65,23 @@ cohérentes, pas de reproduire finement la physique des fibres, fluides ou trans
 Les canaux sont `load_ratio`, `temperature_c`, `vibration_mm_s`, `pressure_bar`, `power_kw`,
 `operating_age_hours` et `degradation_index`. Ils proviennent de l'état de simulation et d'un bruit
 synthétique ; ce ne sont pas des mesures physiques.
+
+La boucle de référence va de `quality-control` à `stock-preparation`. Son rendement configuré de
+`0.75` est appliqué comme probabilité de récupération de Bernoulli avec graine à chaque
+`roll_equivalent` rejeté, avec `max_loops: 2`. Les unités récupérées retraversent toutes les
+opérations aval. Les unités non récupérées ou atteignant la limite deviennent des pertes finales.
+L'implémentation conserve les entités unitaires et compte le débit recyclé interne, mais ne modélise
+pas la masse continue de fibres, l'humidité ni le rendement de pâte.
+
+### 3.4 Statistiques longue durée
+
+`configs/campaigns/long_run.yaml` définit 30 réplications indépendantes, 1 000 jobs planifiés par
+réplication, des arrivées espacées de 45 minutes et une extension d'horizon de 90 jours. La campagne
+calcule les distributions de 15 KPI, les quantiles empiriques R-7 et un intervalle de confiance à
+95 % par approximation normale pour chaque moyenne. Elle exporte aussi les preuves par produit et
+réplication ainsi que par machine et réplication. La réplication 4, graine 1003, est conservée pour le
+Module B car elle contient deux pannes ; cette sélection délibérée d'un échantillon avec événements
+ne signifie pas qu'il est statistiquement représentatif.
 
 ## 4. Module B — maintenance prédictive
 
@@ -85,13 +107,16 @@ traçable vers des méthodes simples et vérifiables.
 | Méthode | Rôle dans la baseline | Limite d'interprétation |
 |---|---|---|
 | EWMA | lisser les écarts capteurs et conserver la dérive récente | pas un diagnostic causal |
+| CUSUM robuste bilatéral | détecter les décalages positifs ou négatifs persistants | partage la limite de fenêtre de référence figée de l'EWMA |
 | Seuil robuste | signaler les scores selon position et échelle résistantes | dépend de la représentativité de la baseline |
 | Risque Weibull conditionnel | estimer la probabilité de panne sur l'horizon depuis l'âge courant | suppose la famille Weibull configurée |
 | RUL Weibull | estimer la vie restante en marche et son incertitude | pas une durée calendaire ni un modèle étalonné indépendamment |
 | Recommandation par règles | transformer preuves et criticité en urgence et action | consultative, pas un ordre de travail automatique |
 | Baseline économique | comparer le coût attendu corrective, préventive et prédictive | utilise des coûts synthétiques |
+| Backtesting à origine glissante | calculer TP, FP, TN, FN, précision, rappel, F1 et délai d'alerte sans variables futures | les fenêtres qui se chevauchent sont corrélées et les fenêtres censurées à droite sont exclues |
+| Étalonnage probabiliste | comparer le risque Weibull conditionnel aux pannes observées par classes de largeur égale | descriptif avec de petits échantillons ou peu de pannes |
 
-CUSUM, modèles de Cox, forêts d'isolation, modèles espace-état et prédiction conforme restent des
+Les modèles de Cox, forêts d'isolation, modèles espace-état et prédiction conforme restent des
 candidats. Ils ne font pas partie de la baseline et devront démontrer une valeur mesurable avant ajout.
 
 ### 4.4 Sorties
@@ -100,11 +125,25 @@ candidats. Ils ne font pas partie de la baseline et devront démontrer une valeu
 |---|---|
 | `maintenance_assessments.json` | anomalie, risque, RUL et recommandation par machine |
 | `maintenance_policy_costs.csv` | comparaison économique corrective, préventive et prédictive |
+| `temporal_predictions.csv` | prédictions à origine glissante, résultats et indicateurs de censure à plat |
+| `temporal_validation_metrics.csv` | confusion EWMA/CUSUM, score de Brier et délai événementiel |
+| `probability_calibration.csv` | classes Weibull non vides et fréquence de panne observée |
+| `machine_decision_features.csv` | risque, politique, coût et impact de capacité à plat pour les Modules C/D/E |
+| `module_b_manifest.json` | versions de schéma, provenance, unités, fichiers et limites connues |
 | `sensor_anomalies.png` | tendances capteurs normalisées et derniers signaux d'anomalie |
 | `failure_risk_rul.png` | risque conditionnel et intervalles RUL |
 | `maintenance_policy_costs.png` | coût attendu des politiques par machine |
+| `temporal_validation.png` | précision, rappel et F1 EWMA/CUSUM sur les fenêtres non censurées |
+| `probability_calibration.png` | risque Weibull prédit face à la fréquence de panne observée |
 
 Les identifiants de sortie restent en anglais technique, même lorsque les rapports sont en français.
+
+Chaque CSV d'interopérabilité de campagne porte `schema_version`, `producer_version`, `provenance` et
+`data_classification`. Les
+probabilités et impacts de capacité utilisent des ratios, la RUL des heures de fonctionnement, le
+délai d'alerte des heures calendaires et les champs monétaires déclarent leur devise. Ces fichiers
+auto-descriptifs sont destinés à être copiés dans des dépôts séparés pour les Modules D et E ; les
+consommateurs doivent vérifier le manifeste adjacent avant ingestion.
 
 ## 5. Séquence du Module A vers B
 
@@ -118,7 +157,7 @@ sequenceDiagram
     Config->>A: usine, commandes, graine, horizon
     A->>Store: états, capteurs, pannes, interventions
     Store->>B: entrées validées par contrat
-    B->>B: EWMA + Weibull + comparaison économique
+    B->>B: EWMA/CUSUM + Weibull + évaluations temporelle et économique
     B->>Human: risque, RUL, recommandation et justification
     Human-->>Config: évolution future de politique approuvée
 ```
@@ -132,6 +171,7 @@ automate, une GMAO ou un planning de production.
 uv run sylvapapers validate-config --config configs/scenarios/baseline.yaml
 uv run sylvapapers simulate --config configs/scenarios/baseline.yaml --output outputs/baseline
 uv run sylvapapers maintenance --input outputs/baseline --output outputs/maintenance
+uv run sylvapapers campaign --config configs/campaigns/long_run.yaml --output outputs/long-run-statistics
 ```
 
 Pour un scénario de maintenance explicite :
@@ -180,9 +220,10 @@ flowchart LR
     E -->|évolutions de paramètres| A
 ```
 
-Le monorepo est conservé pour le développement rapide et les changements atomiques de contrats. Les
-frontières de packages, schémas versionnés et échanges par fichiers permettront une séparation
-ultérieure des dépôts sans modifier les interfaces métier.
+Ce dépôt reste celui des Modules A et B. Les Modules D et E seront implémentés dans des dépôts
+séparés et consommeront uniquement des artefacts CSV/JSON versionnés copiés. Les frontières de
+packages, schémas versionnés, manifestes et échanges par fichiers empêchent ces futurs dépôts de
+dépendre des composants internes de simulation ou de maintenance.
 
 ## 9. Travaux différés
 
@@ -190,8 +231,8 @@ ultérieure des dépôts sans modifier les interfaces métier.
 - application des horaires, compétences du personnel et fenêtres de maintenance ;
 - politiques d'interruption pour les pannes en cours d'opération ;
 - estimation Weibull sur des historiques censurés et approuvés de papèterie ;
-- backtesting temporel, courbes d'étalonnage et matrices de confusion temporelles ;
-- comparaisons CUSUM, Cox, espace-état, conformes ou ML ;
+- validation industrielle hors échantillon sur plusieurs modes de panne et régimes opératoires ;
+- comparaisons Cox, espace-état, conformes ou ML ;
 - optimisation production et techniciens du Module C ;
 - optimisation marketing contrainte par la capacité du Module D ;
 - optimisation stochastique du portefeuille R&D du Module E.

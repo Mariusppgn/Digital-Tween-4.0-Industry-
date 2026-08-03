@@ -126,6 +126,13 @@
   "additionalProperties": false,
   "description": "Fast, interpretable baseline settings for predictive maintenance.",
   "properties": {
+    "calibration_bins": {
+      "default": 5,
+      "maximum": 20,
+      "minimum": 2,
+      "title": "Calibration Bins",
+      "type": "integer"
+    },
     "confidence_level": {
       "default": 0.8,
       "exclusiveMaximum": 1,
@@ -138,6 +145,20 @@
       "exclusiveMinimum": 0,
       "maximum": 10,
       "title": "Criticality",
+      "type": "number"
+    },
+    "cusum_drift": {
+      "default": 0.5,
+      "maximum": 100,
+      "minimum": 0,
+      "title": "Cusum Drift",
+      "type": "number"
+    },
+    "cusum_threshold": {
+      "default": 5.0,
+      "exclusiveMinimum": 0,
+      "maximum": 1000,
+      "title": "Cusum Threshold",
       "type": "number"
     },
     "default_failure_density": {

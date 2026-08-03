@@ -8,7 +8,7 @@ from pathlib import Path
 import networkx as nx
 
 from sylvapapers_contracts import load_factory_config, load_simulation_scenario
-from sylvapapers_digital_twin import calculate_kpis, save_result, simulate
+from sylvapapers_digital_twin import KPI_NAMES, calculate_kpis, save_result, simulate
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -43,7 +43,15 @@ def test_fast_baseline_is_deterministic_and_respects_core_invariants() -> None:
     assert first.jobs == second.jobs
     assert len(first.jobs) == 10
     assert first.runtime_seconds < 30
-    assert nx.is_directed_acyclic_graph(first.graph)
+    nominal_graph = nx.DiGraph(
+        (source, target)
+        for source, target, attributes in first.graph.edges(data=True)
+        if attributes.get("relation", "forward") == "forward"
+    )
+    assert nx.is_directed_acyclic_graph(nominal_graph)
+    assert any(
+        attributes.get("relation") == "recycle" for _, _, attributes in first.graph.edges(data=True)
+    )
     assert first.machine_capacities["drying"] == 2
     assert all(float(event.get("inventory", 0)) >= 0 for event in first.events)
 
@@ -65,7 +73,7 @@ def test_fast_baseline_exports_kpis_and_three_figures(tmp_path: Path) -> None:
     kpis = calculate_kpis(result)
     paths = save_result(result, tmp_path)
 
-    assert len(kpis) == 11
+    assert len(kpis) == len(KPI_NAMES) == 15
     assert kpis["quantity_produced"] == 10
     assert kpis["energy_consumption"] > 0
     assert kpis["total_cost"] > 0

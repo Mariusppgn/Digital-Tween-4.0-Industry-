@@ -2,7 +2,7 @@
 
 > Un jumeau numérique modulaire et reproductible de papèterie, du bois brut aux décisions de maintenance.
 
-[English](README.md) · [Français](README_FR.md) · [Architecture EN](docs/architecture.md) · [Architecture FR](docs/architecture_FR.md) · [Modules A/B EN](docs/modules_a_b.md) · [Modules A/B FR](docs/modules_a_b_FR.md) · [Roadmap](ROADMAP.md) · [Licence](LICENSE)
+[English](README.md) · [Français](README_FR.md) · [Architecture EN](docs/architecture.md) · [Architecture FR](docs/architecture_FR.md) · [Modules A/B EN](docs/modules_a_b.md) · [Modules A/B FR](docs/modules_a_b_FR.md) · [Inter-repository exports EN](docs/inter_repository_exports.md) · [Inter-repository exports FR](docs/inter_repository_exports_FR.md) · [Roadmap](ROADMAP.md) · [Licence](LICENSE)
 
 ## Résumé
 
@@ -64,10 +64,15 @@ flowchart LR
     CAL --> WIND[Bobinage parallèle]
     WIND --> QC{Contrôle qualité}
     QC -->|conforme| ROLLS[Rouleaux de papier]
-    QC -->|rejeté| LOSS[Pertes mesurées]
+    QC -->|rejeté et récupéré| STOCK
+    QC -->|irrécupérable ou limite atteinte| LOSS[Pertes finales mesurées]
 ```
 
-Il n'existe aucune boucle de recyclage ou de reprise. Les rouleaux rejetés deviennent des pertes matière.
+La boucle de rétroaction qualité contrôlée renvoie les rejets éligibles vers la préparation de pâte.
+La récupération est un tirage de Bernoulli avec graine par `roll_equivalent`, avec un rendement
+synthétique de `0.75` et au plus deux passages. Les rejets non récupérés ou atteignant la limite
+deviennent des pertes finales mesurées. Il s'agit d'une comptabilité unitaire, pas d'un bilan massique
+continu de pâte ou de cassés.
 
 ## Module A — jumeau numérique
 
@@ -80,15 +85,22 @@ Son paquet de résultats inclut événements, jobs, KPI et figures, ainsi que le
 capteurs, pannes, interventions de maintenance, historique des files, encours et état final. Les
 capteurs synthétiques exposent charge, température, vibration, pression, puissance, âge et dégradation.
 
+La commande de campagne statistique exécute 30 réplications indépendantes avec graine de 1 000
+rouleaux planifiés, libérés toutes les 45 minutes sur un horizon étendu de 90 jours. Elle exporte les
+distributions des 15 KPI, les quantiles empiriques et des intervalles de confiance à 95 % par
+approximation normale, ainsi que des tables produit et machine destinées aux dépôts aval.
+
 ## Module B — maintenance prédictive
 
 La première baseline de maintenance privilégie volontairement des méthodes rapides et interprétables :
 
-- EWMA et seuils robustes pour les dérives multivariées des capteurs ;
+- EWMA et CUSUM bilatéral avec seuils robustes pour les dérives multivariées des capteurs ;
 - risque Weibull conditionnel à partir de l'âge et d'un horizon configurable ;
 - durée de vie résiduelle légère avec intervalle d'incertitude ;
 - alertes et recommandations explicites avec raisons traçables ;
-- comparaison économique des politiques corrective, préventive et prédictive.
+- comparaison économique des politiques corrective, préventive et prédictive ;
+- backtest à origine glissante sans fuite, avec censure à droite, confusion temporelle et
+  étalonnage descriptif des probabilités.
 
 Ces résultats constituent uniquement une aide à la décision. Ils sont évalués sur des pannes et coûts
 synthétiques ; aucune précision annoncée ne se transfère à une papèterie réelle sans étalonnage.
@@ -106,6 +118,32 @@ synthétiques ; aucune précision annoncée ne se transfère à une papèterie r
 
 Le Module B importe uniquement les contrats versionnés et les résultats persistés. Il n'importe pas
 les composants internes du simulateur : les deux modules pourront donc devenir des packages séparés.
+
+## Exports CSV pour les futurs dépôts des Modules D et E
+
+| Fichier | Consommateur prévu | Grain et usage |
+|---|---|---|
+| `module_d_product_statistics.csv` | Module D | produit × réplication ; capacité, service, retard, perte et recyclage |
+| `module_e_machine_statistics.csv` | Module E | machine × réplication ; utilisation, pannes, arrêt, énergie, émissions et coût |
+| `kpi_statistics.csv` | Modules D et E | résumé des 15 KPI avec quantiles et intervalles de confiance à 95 % |
+| `machine_decision_features.csv` | Modules D et E | risque, RUL, politique, coût et impact capacité du Module B |
+| `handoff_manifest.json` | Modules D et E | liste, lignes, en-têtes, consommateurs et sommes SHA-256 des fichiers |
+
+Chaque ligne d'échange de campagne porte `schema_version`, `producer_version`, `provenance` et
+`data_classification` ; les unités et règles de compatibilité sont dans `column_dictionary.json` ou
+`module_b_manifest.json`. Consulter le
+contrat d'export en [anglais](docs/inter_repository_exports.md) ou en
+[français](docs/inter_repository_exports_FR.md) avant de copier ces fichiers dans les futurs dépôts
+séparés des Modules D et E.
+
+Après la campagne et l'analyse du Module B, créer le paquet compact avec :
+
+```bash
+uv run sylvapapers prepare-exchange --campaign outputs/long-run-statistics --maintenance outputs/long-run-maintenance --output exports/sylvapapers-handoff-v1
+```
+
+La commande rejette les versions majeures ou classifications incompatibles et copie atomiquement
+les seuls fichiers publics. `make exchange` exécute toute la chaîne campagne → maintenance → paquet.
 
 ## Éditeur visuel de l'usine
 
@@ -133,6 +171,7 @@ uv sync --extra dev
 uv run sylvapapers validate-config --config configs/scenarios/baseline.yaml
 uv run sylvapapers simulate --config configs/scenarios/baseline.yaml --output outputs/baseline
 uv run sylvapapers maintenance --input outputs/baseline --output outputs/maintenance
+uv run sylvapapers campaign --config configs/campaigns/long_run.yaml --output outputs/long-run-statistics
 uv run sylvapapers report --input outputs/baseline --output reports/generated
 ```
 
@@ -159,6 +198,7 @@ méthodes lourdes restent facultatives derrière les mêmes contrats.
 configs/                     # Configurations d'usine, simulation et maintenance
 data/examples/               # Produits et commandes synthétiques
 docs/                        # Architecture, contrats, méthodes et hypothèses (EN/FR)
+outputs/long-run-statistics/ # Exports de campagne portables générés (ignorés par Git)
 schemas/                     # Schémas JSON générés
 src/sylvapapers_contracts/   # Contrats Pydantic versionnés
 src/sylvapapers_digital_twin/# Module A, rapports et éditeur web
@@ -177,15 +217,19 @@ uv run pytest
 
 La suite couvre contrats, branches du graphe, produits actifs, comportement Weibull, simulation
 déterministe, instrumentation, pertes mesurées, baselines de maintenance, frontières de l'éditeur,
-interopérabilité JSON et structure bilingue de la documentation.
+interopérabilité JSON, recyclage borné, campagnes longues, validation temporelle et structure
+bilingue de la documentation.
 
 ## Périmètre et limites
 
 - L'usine est événementielle et suit des rouleaux ; la physique continue fibre, humidité et fluides est hors périmètre.
 - Les coefficients Weibull, capteurs, dégradation, coûts de maintenance et procédé sont synthétiques et non étalonnés.
-- EWMA est une baseline de dérive, pas un diagnostic ; le risque Weibull dépend de ses hypothèses.
+- Le recyclage est un Bernoulli par équivalent-rouleau limité à deux passages ; ce n'est pas une récupération continue de fibres.
+- EWMA/CUSUM sont des baselines de dérive, pas des diagnostics ; le risque Weibull dépend de ses hypothèses.
+- Les prédictions temporelles n'utilisent que les préfixes passés et excluent les fenêtres censurées à droite des métriques de confusion et d'étalonnage.
 - Les contrats de calendrier existent, mais leur application complète au personnel et à la maintenance reste future.
-- Les Modules C–E ont des frontières et contrats préparés, mais aucun optimiseur n'est annoncé comme implémenté.
+- Les Modules C–E ont des frontières et contrats préparés, mais aucun optimiseur n'est annoncé comme
+  implémenté ; les Modules D et E sont destinés à des dépôts séparés consommant uniquement les exports.
 - SylvaPapers n'a aucune interface actionneur ou de commande de production et exige une revue humaine.
 
 ## Licence

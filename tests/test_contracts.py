@@ -120,7 +120,7 @@ def test_scenario_rejects_order_for_unknown_product() -> None:
 
 def test_all_public_contracts_export_json_schema(tmp_path) -> None:
     paths = export_json_schemas(tmp_path)
-    assert len(paths) == 27
+    assert len(paths) == 31
     assert all(path.read_text(encoding="utf-8").startswith("{") for path in paths)
 
 

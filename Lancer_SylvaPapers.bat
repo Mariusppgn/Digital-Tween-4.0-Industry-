@@ -13,7 +13,7 @@ set "PYTHONPATH="
 set "PYTHONHOME="
 
 if exist "%PYTHON_EXE%" (
-  "%PYTHON_EXE%" -c "import sys, yaml; from importlib.metadata import version; from pydantic import BaseModel; import matplotlib, networkx, simpy, sylvapapers_contracts, sylvapapers_digital_twin; assert callable(yaml.safe_load); raise SystemExit(0 if sys.version_info >= (3, 12) and version('sylvapapers-digital-twin') == '0.3.0' else 1)" >nul 2>&1
+  "%PYTHON_EXE%" -c "import sys, yaml; from importlib.metadata import version; from pydantic import BaseModel; import matplotlib, networkx, simpy, sylvapapers_contracts, sylvapapers_digital_twin; assert callable(yaml.safe_load); raise SystemExit(0 if sys.version_info >= (3, 12) and version('sylvapapers-digital-twin') == '0.4.0' else 1)" >nul 2>&1
   if not errorlevel 1 goto validate
 )
 

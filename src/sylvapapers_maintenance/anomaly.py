@@ -81,3 +81,65 @@ def ewma_robust_anomaly(
         variable_importance=_normalised_importance(scores),
         provenance="module_b",
     )
+
+
+def cusum_robust_anomaly(
+    records: list[SensorRecord],
+    config: MaintenanceAnalysisConfig,
+) -> AnomalyResult:
+    """Score persistent positive or negative shifts with a robust two-sided CUSUM.
+
+    The center and scale are frozen from the first ``minimum_baseline_points``
+    observations. Scoring starts only after that reference window, so a score at
+    time *t* never uses a sensor value later than *t*. ``cusum_drift`` is the
+    allowance in robust standard deviations and ``cusum_threshold`` is the
+    decision interval.
+    """
+
+    usable = sorted(
+        (record for record in records if record.quality != "bad"),
+        key=lambda record: (record.timestamp, record.sensor_id),
+    )
+    if not usable:
+        raise ValueError("at least one non-bad SensorRecord is required")
+    machine_ids = {record.machine_id for record in usable}
+    if len(machine_ids) != 1:
+        raise ValueError("CUSUM anomaly analysis accepts records for exactly one machine")
+
+    by_variable: dict[str, list[tuple[int, float]]] = defaultdict(list)
+    for index, record in enumerate(usable):
+        for name, value in record.values.items():
+            if math.isfinite(value):
+                by_variable[name].append((index, value))
+
+    latest_index = len(usable) - 1
+    scores: dict[str, float] = {}
+    for name, observations in by_variable.items():
+        values = [value for _, value in observations]
+        baseline_size = min(len(values), config.minimum_baseline_points)
+        center, scale = _robust_scale(values[:baseline_size])
+        positive = 0.0
+        negative = 0.0
+        latest_score = 0.0
+        for variable_index, (record_index, value) in enumerate(observations):
+            if variable_index < baseline_size:
+                continue
+            standardised = (value - center) / scale
+            positive = max(0.0, positive + standardised - config.cusum_drift)
+            negative = min(0.0, negative + standardised + config.cusum_drift)
+            if record_index == latest_index:
+                latest_score = max(positive, -negative)
+        scores[name] = latest_score
+
+    score = max(scores.values(), default=0.0)
+    return AnomalyResult(
+        machine_id=next(iter(machine_ids)),
+        assessed_at=usable[-1].timestamp,
+        method="cusum_robust",
+        score=score,
+        threshold=config.cusum_threshold,
+        is_anomaly=score >= config.cusum_threshold,
+        observations_used=len(usable),
+        variable_importance=_normalised_importance(scores),
+        provenance="module_b",
+    )

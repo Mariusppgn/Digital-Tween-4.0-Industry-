@@ -2,6 +2,7 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
+.test-tmp-*/
 .ruff_cache/
 .mypy_cache/
 .coverage
@@ -22,6 +23,7 @@ build/
 
 # Generated experiment artefacts
 outputs/
+exports/
 reports/generated/
 reports/figures/*.png
 reports/figures/*.svg

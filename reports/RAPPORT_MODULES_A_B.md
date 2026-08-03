@@ -1,7 +1,8 @@
 # Rapport de livraison — Modules A et B de SylvaPapers
 
-Date de validation : 2 août 2026  
-Version : `0.3.0`  
+Date de validation initiale : 2 août 2026
+Extension longue durée et recyclage : 3 août 2026
+Version : `0.4.0`
 Branche : `feature/sylvapapers-modules-a-b`
 
 ## Répartition des travaux
@@ -37,14 +38,15 @@ constitue pas une validation sur données industrielles et ne commande aucune ma
 - pannes, maintenance corrective et maintenance préventive configurable ;
 - états machine et capteurs synthétiques horodatés ;
 - mesure des files, encours, pertes terminales, énergie et coûts ;
-- absence volontaire de recyclage ou de reprise automatique ;
+- boucle qualité contrôlée vers la préparation de pâte, rendement Bernoulli synthétique 0,75 et deux passages maximum ;
+- campagne 30 × 1 000 jobs, 15 KPI avec quantiles et IC95, et exports plats pour les futurs dépôts D/E ;
 - état final et métadonnées décrivant explicitement les limites du modèle ;
 - graphiques de débit, utilisation, KPI, Gantt, files et énergie.
 
 Principaux artefacts produits :
 
 - `events.csv`, `jobs.csv`, `machine_states.csv`, `sensors.csv` ;
-- `failures.csv`, `maintenance.csv`, `queues.csv`, `work_in_progress.csv` ;
+- `failures.csv`, `maintenance.csv`, `recycling.csv`, `queues.csv`, `work_in_progress.csv` ;
 - `kpis.json`, `summary.json`, `final_state.json` ;
 - six figures PNG reproductibles.
 
@@ -52,14 +54,15 @@ Principaux artefacts produits :
 
 - chargement validé des fichiers finaux du Module A ;
 - usage des capteurs, états machine, pannes et interventions de maintenance ;
-- détection d'anomalie par EWMA et seuil robuste ;
+- détection d'anomalie par EWMA et CUSUM bilatéral avec seuils robustes ;
 - importance relative des variables pour chaque alerte ;
 - probabilité conditionnelle de panne Weibull sur un horizon configurable ;
 - RUL Weibull avec intervalle d'incertitude paramétrique ;
 - recommandation par machine : politique, urgence, confiance, action et fenêtre d'intervention ;
 - comparaison économique des politiques corrective, préventive et prédictive ;
 - garde-fou conservateur lorsqu'une anomalie ou un risque élevé est détecté ;
-- résultats JSON/CSV et trois graphiques en français ;
+- backtest à origine glissante sans fuite, censure à droite, confusion temporelle et calibration ;
+- résultats JSON/CSV, cinq graphiques en français et manifeste pour consommateurs externes ;
 - séparation nette des packages `sylvapapers_digital_twin` et `sylvapapers_maintenance`.
 
 Interfaces publiques stables :

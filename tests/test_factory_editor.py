@@ -59,6 +59,11 @@ def test_editor_uses_native_accessible_controls_and_json_interop() -> None:
     assert "function undo()" in script
     assert "function autoLayout()" in script
     assert "function duplicateSelected()" in script
+    assert 'edge.relation === "recycle"' in script
+    assert "const layoutEdges = state.factory.process_graph.edges.filter" in script
+    assert 'byId("edit-recycling")' in script
+    assert 'id="recycling-yield"' in html
+    assert 'id="recycling-max-loops"' in html
     assert "type-location" not in html
 
 

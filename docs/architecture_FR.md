@@ -37,8 +37,9 @@ flowchart LR
   Maint --> Advice[Risque, RUL, recommandations et coûts des politiques]
 ```
 
-Les nœuds conservent entrées, sorties et coordonnées. Les arêtes conservent matière, condition et
-probabilité. La baseline SylvaPapers est acyclique et ne contient aucune route de recyclage.
+Les nœuds conservent entrées, sorties et coordonnées. Les arêtes directes conservent matière,
+condition et probabilité et restent acycliques. Une arête de recyclage typée séparément, validée et
+bornée ferme la boucle qualité contrôlée de `quality-control` vers `stock-preparation`.
 
 ## 5. Comportements série, parallèle et états
 
@@ -62,9 +63,9 @@ et dégradation. Unités et qualité accompagnent chaque relevé.
 configurations + commandes
   -> validation et simulation Module A
   -> events.csv + jobs.csv + machine_states.csv + sensors.csv
-  -> failures.csv + maintenance.csv + queues.csv + work_in_progress.csv
+  -> failures.csv + maintenance.csv + recycling.csv + queues.csv + work_in_progress.csv
   -> validation des entrées Module B
-  -> EWMA + risque Weibull conditionnel + RUL + comparaison économique
+  -> EWMA/CUSUM + risque Weibull conditionnel + RUL + évaluations temporelle/économique
   -> résultats maintenance, recommandations, figures et résumé reproductible
 ```
 
@@ -93,6 +94,7 @@ pour un déploiement partagé ou en production.
 - le Module A émet des paquets opérationnels et capteurs valides ;
 - le Module B rejette les entrées incomplètes et renvoie des résultats traçables par machine ;
 - chaque type expose forme et échelle Weibull positives ;
-- aucun rejet n'est compté comme production acceptée ni recyclé ;
+- une unité rejetée n'est acceptée qu'après recyclage borné réussi et contrôle qualité final ;
+- les rejets non récupérés ou atteignant la limite de deux boucles deviennent des pertes finales ;
 - des entrées et une graine identiques reproduisent les mêmes résultats synthétiques ;
 - tests, Ruff, mypy strict et parité documentaire bilingue passent.

@@ -1,0 +1,68 @@
+{
+  "additionalProperties": false,
+  "description": "Observed frequency for one predicted-probability interval.",
+  "properties": {
+    "bin_index": {
+      "minimum": 0,
+      "title": "Bin Index",
+      "type": "integer"
+    },
+    "mean_predicted_probability": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Mean Predicted Probability",
+      "type": "number"
+    },
+    "method": {
+      "const": "weibull_conditional",
+      "default": "weibull_conditional",
+      "title": "Method",
+      "type": "string"
+    },
+    "observed_failure_rate": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Observed Failure Rate",
+      "type": "number"
+    },
+    "probability_lower": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Probability Lower",
+      "type": "number"
+    },
+    "probability_upper": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Probability Upper",
+      "type": "number"
+    },
+    "provenance": {
+      "default": "sylvapapers",
+      "minLength": 1,
+      "title": "Provenance",
+      "type": "string"
+    },
+    "sample_count": {
+      "minimum": 1,
+      "title": "Sample Count",
+      "type": "integer"
+    },
+    "schema_version": {
+      "default": "1.0.0",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "bin_index",
+    "probability_lower",
+    "probability_upper",
+    "sample_count",
+    "mean_predicted_probability",
+    "observed_failure_rate"
+  ],
+  "title": "ProbabilityCalibrationBin",
+  "type": "object"
+}

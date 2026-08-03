@@ -6,7 +6,7 @@ def test_factory_kpis_and_csv_json_exports(tmp_path):
     result = simulate(factory_config(), scenario_config())
     kpis = calculate_kpis(result)
     assert tuple(kpis) == KPI_NAMES
-    assert len(kpis) == 11
+    assert len(kpis) == len(KPI_NAMES) == 15
     assert kpis["quantity_produced"] == 0
     assert kpis["material_loss_rate"] == 1
     assert kpis["downtime"] > 0

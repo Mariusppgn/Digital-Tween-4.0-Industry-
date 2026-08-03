@@ -17,8 +17,11 @@
       "type": "string"
     },
     "method": {
-      "const": "ewma_robust",
       "default": "ewma_robust",
+      "enum": [
+        "ewma_robust",
+        "cusum_robust"
+      ],
       "title": "Method",
       "type": "string"
     },

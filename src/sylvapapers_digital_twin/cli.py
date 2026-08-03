@@ -89,6 +89,19 @@ def build_parser() -> argparse.ArgumentParser:
     _input_arguments(run)
     run.add_argument("--output", default="outputs/baseline")
     run.add_argument("--no-plots", action="store_true")
+    campaign = commands.add_parser(
+        "campaign", help="Run a reproducible multi-replication statistical campaign"
+    )
+    campaign.add_argument("--config", default="configs/campaigns/long_run.yaml")
+    campaign.add_argument("--output", default="outputs/long-run")
+    campaign.add_argument("--no-plot", action="store_true")
+    exchange = commands.add_parser(
+        "prepare-exchange",
+        help="Create a compact validated CSV handoff for separate Module D/E repositories",
+    )
+    exchange.add_argument("--campaign", default="outputs/long-run-statistics")
+    exchange.add_argument("--maintenance", default="outputs/long-run-maintenance")
+    exchange.add_argument("--output", default="exports/sylvapapers-handoff-v1")
     report = commands.add_parser("report", help="Create a Markdown report from saved results")
     report.add_argument("--input", default="outputs/baseline")
     report.add_argument("--output")
@@ -152,16 +165,73 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
         return 0
+    if args.command == "campaign":
+        from .campaign import load_campaign_config, run_campaign, save_campaign
+
+        campaign_config = load_campaign_config(args.config)
+        campaign_inputs = argparse.Namespace(
+            config=str(campaign_config.simulation_config),
+            factory=None,
+            scenario=None,
+            product=None,
+        )
+        factory, scenario, product = _inputs(campaign_inputs)
+        campaign_result = run_campaign(factory, scenario, campaign_config, product)
+        paths = save_campaign(campaign_result, args.output, plot=not args.no_plot)
+        print(
+            json.dumps(
+                {
+                    "campaign_id": campaign_config.campaign_id,
+                    "scenario_id": campaign_result.metadata["scenario_id"],
+                    "replications": len(campaign_result.runs),
+                    "jobs_per_replication": campaign_result.metadata["jobs_per_replication"],
+                    "total_planned_jobs": campaign_result.metadata["total_planned_jobs"],
+                    "total_runtime_seconds": round(
+                        sum(float(row["runtime_seconds"]) for row in campaign_result.runs), 6
+                    ),
+                    "files": {name: str(path) for name, path in paths.items()},
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
+        return 0
+    if args.command == "prepare-exchange":
+        from .exchange import prepare_exchange_bundle
+
+        paths = prepare_exchange_bundle(args.campaign, args.maintenance, args.output)
+        print(
+            json.dumps(
+                {
+                    "valid": True,
+                    "output": str(Path(args.output).resolve()),
+                    "files": {name: str(path) for name, path in paths.items()},
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
+        return 0
     factory, scenario, product = _inputs(args)
     graph = build_process_graph(factory)
     if args.command == "validate-config":
+        nominal_graph = nx.DiGraph(
+            (source, target)
+            for source, target, attributes in graph.edges(data=True)
+            if attributes.get("relation", "forward") == "forward"
+        )
+        nominal_graph.add_nodes_from(graph.nodes)
         print(
             json.dumps(
                 {
                     "valid": True,
                     "nodes": len(graph),
                     "edges": graph.number_of_edges(),
-                    "has_cycle": not nx.is_directed_acyclic_graph(graph),
+                    "has_cycle": not nx.is_directed_acyclic_graph(nominal_graph),
+                    "has_controlled_feedback": any(
+                        attributes.get("relation") == "recycle"
+                        for _, _, attributes in graph.edges(data=True)
+                    ),
                 }
             )
         )

@@ -81,6 +81,73 @@ function densityText(machineType) {
   return `Weibull · β ${density.shape} · η ${density.scale_hours} h de fonctionnement`;
 }
 
+function fillNodeSelect(selectId, nodes, selected) {
+  const select = byId(selectId);
+  select.replaceChildren();
+  nodes.forEach((node) => {
+    const option = document.createElement("option");
+    option.value = node.node_id;
+    option.textContent = `${node.name} (${node.node_id})`;
+    option.selected = node.node_id === selected;
+    select.append(option);
+  });
+}
+
+function openRecyclingDialog() {
+  const graph = state.factory.process_graph;
+  const recycling = graph.recycling || {};
+  const qualityNodes = graph.nodes.filter((node) => node.kind === "quality_control");
+  const operationNodes = graph.nodes.filter((node) => node.kind === "operation");
+  fillNodeSelect("recycling-source", qualityNodes, recycling.source_node_id);
+  fillNodeSelect("recycling-target", operationNodes, recycling.return_to_node_id);
+  byId("recycling-enabled").checked = Boolean(recycling.enabled);
+  byId("recycling-yield").value = recycling.recovery_yield ?? 0.75;
+  byId("recycling-max-loops").value = recycling.max_loops ?? 2;
+  byId("recycling-unit").value = recycling.quantity_unit || "roll_equivalent";
+  byId("recycling-error").textContent = qualityNodes.length && operationNodes.length ? "" : "Ajoutez au moins un contrôle qualité et une opération.";
+  byId("recycling-dialog").showModal();
+}
+
+byId("recycling-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const graph = state.factory.process_graph;
+  const source = byId("recycling-source").value;
+  const target = byId("recycling-target").value;
+  const recoveryYield = Number(byId("recycling-yield").value);
+  const maxLoops = Number(byId("recycling-max-loops").value);
+  const conflict = graph.edges.some((edge) => edge.source === source && edge.target === target && edge.relation !== "recycle");
+  if (!source || !target || conflict || !(recoveryYield >= 0 && recoveryYield <= 1) || !Number.isInteger(maxLoops) || maxLoops < 1 || maxLoops > 20) {
+    byId("recycling-error").textContent = conflict ? "Une relation forward utilise déjà ces extrémités." : "Vérifiez les étapes, le rendement et la limite de boucles.";
+    return;
+  }
+  checkpoint();
+  graph.edges = graph.edges.filter((edge) => edge.relation !== "recycle");
+  graph.edges.push({
+    schema_version: "1.0.0",
+    provenance: "user-edited-not-calibrated",
+    source,
+    target,
+    relation: "recycle",
+    condition: "non_conforme_recuperable",
+    probability: recoveryYield,
+    material: "pate_recyclee",
+  });
+  graph.recycling = {
+    schema_version: "1.0.0",
+    provenance: "user-edited-not-calibrated",
+    enabled: byId("recycling-enabled").checked,
+    source_node_id: source,
+    return_to_node_id: target,
+    recovery_yield: recoveryYield,
+    max_loops: maxLoops,
+    quantity_unit: byId("recycling-unit").value.trim() || "roll_equivalent",
+    assumptions_are_synthetic: true,
+  };
+  byId("recycling-dialog").close();
+  status(`Boucle de recyclage ${graph.recycling.enabled ? "activée" : "désactivée"} et enregistrée.`);
+  render();
+});
+
 function normalizeFactory(payload) {
   const factory = payload && payload.factory ? payload.factory : payload;
   if (!factory || typeof factory !== "object") throw new Error("Le JSON ne contient pas de configuration usine.");
@@ -92,6 +159,7 @@ function normalizeFactory(payload) {
   factory.process_graph ||= {schema_version: "1.0.0", provenance: "user-edited", nodes: [], edges: []};
   factory.process_graph.nodes ||= [];
   factory.process_graph.edges ||= [];
+  factory.process_graph.edges.forEach((edge) => { edge.relation ||= "forward"; });
   factory.resource_calendars ||= [];
   factory.process_graph.nodes.forEach((node, index) => {
     node.machine_ids ||= [];
@@ -144,10 +212,46 @@ function validateFactory(factory = state.factory) {
   factory.process_graph.edges.forEach((edge) => {
     if (!knownNodes.has(edge.source) || !knownNodes.has(edge.target)) errors.push(`relation invalide ${edge.source} → ${edge.target}`);
     if (edge.source === edge.target) errors.push(`boucle directe interdite sur ${edge.source}`);
-    const key = `${edge.source}\u0000${edge.target}\u0000${edge.condition || ""}`;
+    if (!["forward", "recycle"].includes(edge.relation || "forward")) errors.push(`type de relation invalide ${edge.source} vers ${edge.target}`);
+    const key = `${edge.source}\u0000${edge.target}\u0000${edge.relation || "forward"}\u0000${edge.condition || ""}`;
     if (edgeKeys.has(key)) errors.push(`relation dupliquée ${edge.source} → ${edge.target}`);
     edgeKeys.add(key);
   });
+  const forwardEdges = factory.process_graph.edges.filter((edge) => (edge.relation || "forward") === "forward");
+  const forwardIndegree = new Map(nodes.map((node) => [node.node_id, 0]));
+  forwardEdges.forEach((edge) => {
+    if (knownNodes.has(edge.target)) forwardIndegree.set(edge.target, forwardIndegree.get(edge.target) + 1);
+  });
+  const forwardQueue = nodes.filter((node) => forwardIndegree.get(node.node_id) === 0).map((node) => node.node_id);
+  for (let index = 0; index < forwardQueue.length; index += 1) {
+    forwardEdges.filter((edge) => edge.source === forwardQueue[index]).forEach((edge) => {
+      forwardIndegree.set(edge.target, forwardIndegree.get(edge.target) - 1);
+      if (forwardIndegree.get(edge.target) === 0) forwardQueue.push(edge.target);
+    });
+  }
+  if (forwardQueue.length !== nodes.length) errors.push("les relations forward doivent rester acycliques");
+  const recycling = factory.process_graph.recycling;
+  const recycleEdges = factory.process_graph.edges.filter((edge) => edge.relation === "recycle");
+  if (recycleEdges.length > 1) errors.push("une seule boucle de recyclage controlee est acceptee");
+  if (recycleEdges.length && !recycling) errors.push("la relation recycle requiert sa configuration explicite");
+  if (recycling) {
+    const matching = recycleEdges.length === 1 && recycleEdges[0].source === recycling.source_node_id && recycleEdges[0].target === recycling.return_to_node_id;
+    if (!matching) errors.push("la relation recycle et sa configuration doivent avoir les memes extremites");
+    if (!(Number(recycling.recovery_yield) >= 0 && Number(recycling.recovery_yield) <= 1)) errors.push("le rendement de recyclage doit etre compris entre 0 et 1");
+    if (!(Number.isInteger(Number(recycling.max_loops)) && Number(recycling.max_loops) >= 1 && Number(recycling.max_loops) <= 20)) errors.push("max_loops doit etre un entier entre 1 et 20");
+    const source = nodes.find((node) => node.node_id === recycling.source_node_id);
+    const target = nodes.find((node) => node.node_id === recycling.return_to_node_id);
+    if (source?.kind !== "quality_control") errors.push("le recyclage doit partir d'un controle qualite");
+    if (target?.kind !== "operation") errors.push("le recyclage doit revenir vers une operation");
+    const reachable = new Set([recycling.return_to_node_id]);
+    const pending = [recycling.return_to_node_id];
+    for (let index = 0; index < pending.length; index += 1) {
+      forwardEdges.filter((edge) => edge.source === pending[index]).forEach((edge) => {
+        if (!reachable.has(edge.target)) { reachable.add(edge.target); pending.push(edge.target); }
+      });
+    }
+    if (!reachable.has(recycling.source_node_id)) errors.push("le retour de recyclage doit viser une operation en amont");
+  }
   return errors;
 }
 
@@ -236,7 +340,7 @@ function renderEdges() {
     if (!geometry) return;
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
     path.setAttribute("d", geometry.path);
-    path.setAttribute("class", `edge-path rendered-edge${state.selectedEdge === index ? " selected" : ""}`);
+    path.setAttribute("class", `edge-path rendered-edge${edge.relation === "recycle" ? " recycle" : ""}${state.selectedEdge === index ? " selected" : ""}`);
     edgeLayer.append(path);
     if (edge.material || edge.condition) {
       const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -244,7 +348,7 @@ function renderEdges() {
       text.setAttribute("y", String((geometry.y1 + geometry.y2) / 2 - 8));
       text.setAttribute("text-anchor", "middle");
       text.setAttribute("class", "edge-material rendered-edge");
-      text.textContent = edge.material || edge.condition;
+      text.textContent = `${edge.relation === "recycle" ? "RECYCLAGE: " : ""}${edge.material || edge.condition}`;
       edgeLayer.append(text);
     }
   });
@@ -264,7 +368,8 @@ function renderInspector() {
   } else if (state.selectedEdge !== null) {
     const edge = state.factory.process_graph.edges[state.selectedEdge];
     const body = document.createElement("p");
-    body.textContent = `${edge.source} → ${edge.target}${edge.material ? `\nMatière : ${edge.material}` : ""}`;
+    const recycling = edge.relation === "recycle" ? state.factory.process_graph.recycling : null;
+    body.textContent = `${edge.source} → ${edge.target}\nType : ${edge.relation || "forward"}${edge.material ? `\nMatière : ${edge.material}` : ""}${recycling ? `\nActivé : ${recycling.enabled ? "oui" : "non"}\nRendement : ${recycling.recovery_yield}\nBoucles max. : ${recycling.max_loops}` : ""}`;
     body.style.whiteSpace = "pre-line";
     details.append(body);
   } else {
@@ -280,7 +385,7 @@ function renderInspector() {
     const item = document.createElement("li");
     const button = document.createElement("button");
     button.type = "button";
-    button.textContent = `${edge.source} → ${edge.target}${edge.material ? ` · ${edge.material}` : ""}`;
+    button.textContent = `${edge.relation === "recycle" ? "↺ " : ""}${edge.source} → ${edge.target}${edge.material ? ` · ${edge.material}` : ""}`;
     button.addEventListener("click", () => {
       state.selectedEdge = index;
       state.selectedNode = null;
@@ -443,6 +548,9 @@ byId("node-form").addEventListener("submit", (event) => {
     if (edge.source === originalId) edge.source = nodeId;
     if (edge.target === originalId) edge.target = nodeId;
   });
+  const recycling = state.factory.process_graph.recycling;
+  if (recycling?.source_node_id === originalId) recycling.source_node_id = nodeId;
+  if (recycling?.return_to_node_id === originalId) recycling.return_to_node_id = nodeId;
   state.selectedNode = nodeId;
   byId("node-dialog").close();
   status(`Étape ${node.name} enregistrée.`);
@@ -544,12 +652,17 @@ function deleteSelected() {
     if (!window.confirm(`Supprimer la relation ${edge.source} → ${edge.target} ?`)) return;
     checkpoint();
     state.factory.process_graph.edges.splice(state.selectedEdge, 1);
+    if (edge.relation === "recycle") delete state.factory.process_graph.recycling;
     state.selectedEdge = null;
     status("Relation supprimée.");
   } else if (state.selectedNode) {
     const node = state.factory.process_graph.nodes.find((item) => item.node_id === state.selectedNode);
     if (!window.confirm(`Supprimer l'étape ${node.name} et ses relations ?`)) return;
     checkpoint();
+    const recycling = state.factory.process_graph.recycling;
+    if (recycling && [recycling.source_node_id, recycling.return_to_node_id].includes(node.node_id)) {
+      delete state.factory.process_graph.recycling;
+    }
     state.factory.process_graph.nodes = state.factory.process_graph.nodes.filter((item) => item !== node);
     state.factory.process_graph.edges = state.factory.process_graph.edges.filter((edge) => edge.source !== node.node_id && edge.target !== node.node_id);
     state.selectedNode = null;
@@ -579,8 +692,9 @@ function autoLayout() {
   checkpoint();
   const nodes = state.factory.process_graph.nodes;
   const known = new Set(nodes.map((node) => node.node_id));
+  const layoutEdges = state.factory.process_graph.edges.filter((edge) => (edge.relation || "forward") === "forward");
   const indegree = new Map(nodes.map((node) => [node.node_id, 0]));
-  state.factory.process_graph.edges.forEach((edge) => {
+  layoutEdges.forEach((edge) => {
     if (known.has(edge.source) && known.has(edge.target)) indegree.set(edge.target, indegree.get(edge.target) + 1);
   });
   const level = new Map();
@@ -588,7 +702,7 @@ function autoLayout() {
   queue.forEach((id) => level.set(id, 0));
   for (let index = 0; index < queue.length; index += 1) {
     const source = queue[index];
-    state.factory.process_graph.edges.filter((edge) => edge.source === source).forEach((edge) => {
+    layoutEdges.filter((edge) => edge.source === source).forEach((edge) => {
       level.set(edge.target, Math.max(level.get(edge.target) || 0, (level.get(source) || 0) + 1));
       indegree.set(edge.target, indegree.get(edge.target) - 1);
       if (indegree.get(edge.target) === 0) queue.push(edge.target);
@@ -688,6 +802,7 @@ byId("undo").addEventListener("click", undo);
 byId("redo").addEventListener("click", redo);
 byId("add-machine").addEventListener("click", () => openMachineDialog());
 byId("edit-machine-types").addEventListener("click", openTypeDialog);
+byId("edit-recycling").addEventListener("click", openRecyclingDialog);
 byId("delete-machine").addEventListener("click", deleteMachine);
 document.querySelectorAll("[data-close]").forEach((button) => button.addEventListener("click", () => byId(button.dataset.close).close()));
 document.addEventListener("keydown", (event) => {

@@ -35,15 +35,15 @@ maintenance analysis cannot overwrite its source evidence.
 
 ## 5. Algorithm policy
 
-EWMA, robust thresholds and closed-form Weibull calculations are the default laptop baselines.
-Optional CUSUM, survival, state-space or machine-learning methods must share the same input/output
-contracts, expose their cost and remain disabled in `fast`.
+EWMA, robust CUSUM and closed-form Weibull calculations are the default laptop baselines. Optional
+survival, state-space or machine-learning methods must share the same input/output contracts, expose
+their cost and remain disabled in `fast`.
 
 ## 6. Termination guards
 
-Product routes must terminate at a sink. The factory has no recycling or rework cycle. Simulation
-horizon, order count and output size are bounded by validated configuration; maintenance input must
-be a finite, complete result bundle.
+Forward product routes must terminate at a sink. The only cycle is the explicit QC recycling edge,
+bounded by a validated maximum pass count. Simulation horizon, order count and output size are
+bounded by validated configuration; maintenance input must be a finite, complete result bundle.
 
 ## 7. Measurement
 

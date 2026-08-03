@@ -12,7 +12,15 @@
     "parameters": ["shape", "scale_hours"],
     "age_unit": "operating_hours"
   },
-  "recycling": false,
+  "recycling": {
+    "enabled": true,
+    "source_node_id": "quality-control",
+    "return_to_node_id": "stock-preparation",
+    "recovery_yield": 0.75,
+    "max_loops": 2,
+    "quantity_unit": "roll_equivalent",
+    "interpretation": "seeded_bernoulli_per_rejected_unit"
+  },
   "quality_losses_measured": true,
   "editor": {
     "local_web": true,

@@ -3,7 +3,10 @@ provenance: synthetic_example
 horizon_hours: 72
 ewma_alpha: 0.3
 robust_z_threshold: 3.5
+cusum_drift: 0.5
+cusum_threshold: 5.0
 minimum_baseline_points: 5
+calibration_bins: 5
 confidence_level: 0.8
 predictive_risk_threshold: 0.25
 criticality: 1.0

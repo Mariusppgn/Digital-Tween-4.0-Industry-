@@ -81,6 +81,7 @@ class SimulationResult:
     maintenance_interventions: list[dict[str, Any]] = field(default_factory=list)
     queue_history: list[dict[str, Any]] = field(default_factory=list)
     work_in_progress: list[dict[str, Any]] = field(default_factory=list)
+    recycling_records: list[dict[str, Any]] = field(default_factory=list)
     final_state: dict[str, Any] = field(default_factory=dict)
 
     @property
@@ -129,10 +130,16 @@ class DigitalTwinSimulator:
         self.maintenance_interventions: list[dict[str, Any]] = []
         self.queue_history: list[dict[str, Any]] = []
         self.work_in_progress: list[dict[str, Any]] = []
+        self.recycling_records: list[dict[str, Any]] = []
         self.current_wip = 0
         self.shared: dict[str, list[float]] = {}
         self.last_load: dict[str, float] = {}
         self.machines = self._machines()
+        self.recycling = (
+            mapping(self.graph.graph["recycling"])
+            if self.graph.graph.get("recycling") is not None
+            else None
+        )
 
     def _machines(self) -> dict[str, MachineState]:
         result: dict[str, MachineState] = {}
@@ -426,6 +433,7 @@ class DigitalTwinSimulator:
                 (source, target)
                 for source, target in pairwise(route)
                 if not self.graph.has_edge(source, target)
+                or self.graph.edges[source, target].get("relation", "forward") != "forward"
             ]
             if disconnected:
                 raise ValueError(f"Product routing contains disconnected steps: {disconnected}")
@@ -438,7 +446,14 @@ class DigitalTwinSimulator:
             node for node, data in self.graph.nodes(data=True) if data.get("kind") == "source"
         ]
         if not sources:
-            sources = [node for node, degree in self.graph.in_degree() if degree == 0]
+            forward_indegree = {
+                node: sum(
+                    attributes.get("relation", "forward") == "forward"
+                    for _, _, attributes in self.graph.in_edges(node, data=True)
+                )
+                for node in self.graph
+            }
+            sources = [node for node, degree in forward_indegree.items() if degree == 0]
         if not sources:
             raise ValueError("The process graph requires at least one source")
         metadata = mapping(product.get("metadata") or {})
@@ -462,6 +477,7 @@ class DigitalTwinSimulator:
             candidates = [
                 (current, target, data)
                 for _, target, data in self.graph.out_edges(current, data=True)
+                if data.get("relation", "forward") == "forward"
                 if (current, target) not in visited
             ]
             if not candidates:
@@ -802,11 +818,13 @@ class DigitalTwinSimulator:
             if not route:
                 raise ValueError("At least one process operation is required")
             cycle_times = mapping(product.get("cycle_time_minutes") or {})
-            now, index, first_pass, lost = (
+            now, index, first_pass, lost, recycle_loop_count, quality_rejections = (
                 float(job["release_time"]),
                 0,
                 True,
                 False,
+                0,
+                0,
             )
             self._log("order_released", now, job["job_id"])
             self._wip(now, job["job_id"], job["product_id"], route[0], "released", 1)
@@ -846,6 +864,102 @@ class DigitalTwinSimulator:
                     )
                     if failed:
                         first_pass = False
+                        quality_rejections += 1
+                        recycling_enabled = bool(
+                            self.recycling
+                            and self.recycling.get("enabled", False)
+                            and self.recycling.get("source_node_id") == state.machine_id
+                        )
+                        recovery_yield = (
+                            float(self.recycling.get("recovery_yield", 0.0))
+                            if self.recycling
+                            else 0.0
+                        )
+                        max_loops = int(self.recycling.get("max_loops", 0)) if self.recycling else 0
+                        return_to = (
+                            str(self.recycling.get("return_to_node_id", ""))
+                            if self.recycling
+                            else ""
+                        )
+                        quantity_unit = str(
+                            (self.recycling or {}).get(
+                                "quantity_unit",
+                                product.get("unit") or "unit",
+                            )
+                        )
+                        eligible = recycling_enabled and recycle_loop_count < max_loops
+                        recovered = eligible and self.random.random() < recovery_yield
+                        if recovered:
+                            if return_to not in route:
+                                raise ValueError(
+                                    "Recycling return node is absent from the product routing: "
+                                    f"{return_to!r}"
+                                )
+                            recycle_loop_count += 1
+                            outcome = "recycled"
+                            recovered_quantity = 1.0
+                            unrecoverable_quantity = 0.0
+                        elif recycling_enabled and recycle_loop_count >= max_loops:
+                            outcome = "max_loops_reached"
+                            recovered_quantity = 0.0
+                            unrecoverable_quantity = 1.0
+                        elif recycling_enabled:
+                            outcome = "recovery_loss"
+                            recovered_quantity = 0.0
+                            unrecoverable_quantity = 1.0
+                        elif self.recycling:
+                            outcome = "disabled_final_loss"
+                            recovered_quantity = 0.0
+                            unrecoverable_quantity = 1.0
+                        else:
+                            outcome = "not_configured_final_loss"
+                            recovered_quantity = 0.0
+                            unrecoverable_quantity = 1.0
+                        recycling_id = f"REC-{len(self.recycling_records) + 1:06d}"
+                        recycling_record = {
+                            "recycling_event_id": recycling_id,
+                            "time_minutes": round(now, 6),
+                            "timestamp": self._timestamp(now),
+                            "job_id": job["job_id"],
+                            "product_id": job["product_id"],
+                            "source_node_id": state.machine_id,
+                            "return_to_node_id": return_to,
+                            "quality_rejection_number": quality_rejections,
+                            "completed_recycle_loops": recycle_loop_count,
+                            "max_recycle_loops": max_loops,
+                            "input_quantity": 1.0,
+                            "recovered_quantity": recovered_quantity,
+                            "unrecoverable_quantity": unrecoverable_quantity,
+                            "quantity_unit": quantity_unit,
+                            "configured_recovery_yield": recovery_yield,
+                            "recovery_attempted": eligible,
+                            "outcome": outcome,
+                            "synthetic": True,
+                        }
+                        self.recycling_records.append(recycling_record)
+                        self._log(
+                            "recycling_return" if recovered else "recycling_final_loss",
+                            now,
+                            job["job_id"],
+                            state.machine_id,
+                            recycling_event_id=recycling_id,
+                            return_to_node_id=return_to,
+                            recycle_loop_count=recycle_loop_count,
+                            recovered_quantity=recovered_quantity,
+                            unrecoverable_quantity=unrecoverable_quantity,
+                            quantity_unit=quantity_unit,
+                            outcome=outcome,
+                        )
+                        if recovered:
+                            self._wip(
+                                now,
+                                job["job_id"],
+                                job["product_id"],
+                                return_to,
+                                "recycling_return",
+                            )
+                            index = route.index(return_to)
+                            continue
                         lost = True
                         self._log(
                             "material_loss",
@@ -885,6 +999,11 @@ class DigitalTwinSimulator:
                     "first_pass": first_pass,
                     "accepted": not lost,
                     "material_loss": 1 if lost else 0,
+                    "final_material_loss": 1 if lost else 0,
+                    "recycled_quantity": recycle_loop_count,
+                    "recycle_loop_count": recycle_loop_count,
+                    "quality_rejections": quality_rejections,
+                    "material_balance_error": 0.0,
                 }
             )
         self.events.sort(key=lambda event: (event["time"], event["event_id"]))
@@ -906,9 +1025,13 @@ class DigitalTwinSimulator:
         self.work_in_progress.sort(
             key=lambda row: (float(row["time_minutes"]), str(row["job_id"]), str(row["status"]))
         )
+        self.recycling_records.sort(
+            key=lambda row: (float(row["time_minutes"]), str(row["recycling_event_id"]))
+        )
         materials: dict[str, float] = {}
         finished_goods: dict[str, int] = {}
         measured_losses: dict[str, int] = {}
+        recycled_throughput: dict[str, int] = {}
         for job in jobs:
             product = self.products.get(str(job["product_id"]), {})
             for material, quantity in mapping(product.get("bill_of_materials") or {}).items():
@@ -916,6 +1039,14 @@ class DigitalTwinSimulator:
             destination = finished_goods if job.get("accepted", True) else measured_losses
             product_id = str(job["product_id"] or "unspecified")
             destination[product_id] = destination.get(product_id, 0) + 1
+            recycled_throughput[product_id] = recycled_throughput.get(product_id, 0) + int(
+                job.get("recycled_quantity", 0)
+            )
+        released_quantity = len(jobs)
+        accepted_quantity = sum(bool(job.get("accepted", True)) for job in jobs)
+        final_loss_quantity = sum(float(job.get("final_material_loss", 0)) for job in jobs)
+        recycled_quantity = sum(float(job.get("recycled_quantity", 0)) for job in jobs)
+        material_balance_error = released_quantity - accepted_quantity - final_loss_quantity
         final_state = {
             "time_minutes": round(
                 max((float(job["completion_time"]) for job in jobs), default=0.0), 6
@@ -947,9 +1078,20 @@ class DigitalTwinSimulator:
                 "material_consumed": {key: round(value, 6) for key, value in materials.items()},
                 "finished_goods": finished_goods,
                 "measured_losses": measured_losses,
+                "recycled_throughput": recycled_throughput,
                 "constraint_mode": "accounting_only_no_stock_capacity",
             },
             "totals": {
+                "released_quantity": released_quantity,
+                "accepted_quantity": accepted_quantity,
+                "recycled_quantity": recycled_quantity,
+                "final_material_loss_quantity": final_loss_quantity,
+                "material_balance_error": material_balance_error,
+                "quality_rejections": sum(int(job.get("quality_rejections", 0)) for job in jobs),
+                "recycling_attempts": sum(
+                    bool(record.get("recovery_attempted", False))
+                    for record in self.recycling_records
+                ),
                 "energy_kwh": round(
                     sum(
                         float(event.get("energy", 0))
@@ -981,7 +1123,7 @@ class DigitalTwinSimulator:
                 "factory_id": self.factory.get("factory_id", "unknown"),
                 "scenario_id": self.scenario.get("scenario_id", "unknown"),
                 "schema_version": self.scenario.get("schema_version", "1.0.0"),
-                "code_version": "0.3.0",
+                "code_version": "0.4.0",
                 "time_unit": "minute",
                 "operating_age_unit": "hour",
                 "sensor_data_classification": "synthetic_hypothesis_not_calibrated",
@@ -990,6 +1132,14 @@ class DigitalTwinSimulator:
                     "preventive": "configured_per_machine_or_machine_type_by_age_or_degradation",
                     "technician_resource": "maintenance-team",
                 },
+                "recycling_policy": {
+                    "enabled": bool(self.recycling and self.recycling.get("enabled", False)),
+                    "source_node_id": (self.recycling or {}).get("source_node_id"),
+                    "return_to_node_id": (self.recycling or {}).get("return_to_node_id"),
+                    "configured_recovery_yield": (self.recycling or {}).get("recovery_yield"),
+                    "max_loops": (self.recycling or {}).get("max_loops"),
+                    "atomic_yield_interpretation": "seeded_bernoulli_per_rejected_unit",
+                },
                 "model_limits": {
                     "resource_calendars": "declared_not_enforced",
                     "human_capacity": "not_constrained",
@@ -997,7 +1147,10 @@ class DigitalTwinSimulator:
                     "energy_tariffs": "constant_machine_cost_only",
                     "failure_timing": "evaluated_before_operation_not_mid_operation",
                     "repair_duration": "deterministic",
-                    "material_balance": "bill_of_materials_accounting_not_continuous_mass_balance",
+                    "material_balance": (
+                        "unit_level_conservation_with_internal_recycled_throughput; "
+                        "bill_of_materials_not_continuous_mass_balance"
+                    ),
                 },
             },
             machine_states=self.machine_states,
@@ -1006,6 +1159,7 @@ class DigitalTwinSimulator:
             maintenance_interventions=self.maintenance_interventions,
             queue_history=self.queue_history,
             work_in_progress=self.work_in_progress,
+            recycling_records=self.recycling_records,
             final_state=final_state,
         )
 

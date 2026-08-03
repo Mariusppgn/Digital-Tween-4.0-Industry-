@@ -66,14 +66,33 @@ class ProcessNode(ContractModel):
 class ProcessEdge(ContractModel):
     source: str = Field(min_length=1)
     target: str = Field(min_length=1)
+    relation: Literal["forward", "recycle"] = "forward"
     condition: str | None = None
     probability: float | None = Field(default=None, ge=0, le=1)
     material: str | None = None
 
 
+class RecyclingConfig(ContractModel):
+    """Bounded quality-loss feedback configured on the process graph.
+
+    ``recovery_yield`` is interpreted as a Bernoulli recovery probability for
+    each atomic simulation unit. Its aggregate realised yield converges to the
+    configured value over a sufficiently long seeded simulation campaign.
+    """
+
+    enabled: bool = False
+    source_node_id: str = Field(min_length=1)
+    return_to_node_id: str = Field(min_length=1)
+    recovery_yield: float = Field(default=0.75, ge=0, le=1)
+    max_loops: int = Field(default=1, ge=1, le=20)
+    quantity_unit: str = Field(default="roll_equivalent", min_length=1)
+    assumptions_are_synthetic: bool = True
+
+
 class ProcessGraph(ContractModel):
     nodes: list[ProcessNode] = Field(min_length=2)
     edges: list[ProcessEdge] = Field(min_length=1)
+    recycling: RecyclingConfig | None = None
 
     @model_validator(mode="after")
     def validate_graph(self) -> ProcessGraph:
@@ -86,6 +105,58 @@ class ProcessGraph(ContractModel):
                 raise ValueError("process edges must reference existing nodes")
             if edge.source == edge.target:
                 raise ValueError("self-loop process edges are not allowed")
+        recycle_edges = [edge for edge in self.edges if edge.relation == "recycle"]
+        if len(recycle_edges) > 1:
+            raise ValueError("only one controlled recycling edge is supported")
+        if recycle_edges and self.recycling is None:
+            raise ValueError("a recycle edge requires an explicit recycling configuration")
+        if self.recycling is not None:
+            if len(recycle_edges) != 1:
+                raise ValueError("recycling configuration requires exactly one recycle edge")
+            recycle_edge = recycle_edges[0]
+            expected = (
+                self.recycling.source_node_id,
+                self.recycling.return_to_node_id,
+            )
+            if (recycle_edge.source, recycle_edge.target) != expected:
+                raise ValueError("recycle edge endpoints must match the recycling configuration")
+            nodes = {node.node_id: node for node in self.nodes}
+            if nodes[recycle_edge.source].kind != "quality_control":
+                raise ValueError("recycling must originate from a quality-control node")
+            if nodes[recycle_edge.target].kind != "operation":
+                raise ValueError("recycling must return to an operation node")
+
+        forward_adjacency: dict[str, list[str]] = {node_id: [] for node_id in node_ids}
+        for edge in self.edges:
+            if edge.relation == "forward":
+                forward_adjacency[edge.source].append(edge.target)
+        visiting: set[str] = set()
+        visited: set[str] = set()
+
+        def visit(node_id: str) -> None:
+            if node_id in visiting:
+                raise ValueError("forward process edges must form an acyclic graph")
+            if node_id in visited:
+                return
+            visiting.add(node_id)
+            for target in forward_adjacency[node_id]:
+                visit(target)
+            visiting.remove(node_id)
+            visited.add(node_id)
+
+        for node_id in node_ids:
+            visit(node_id)
+        if self.recycling is not None:
+            reachable = {self.recycling.return_to_node_id}
+            pending = [self.recycling.return_to_node_id]
+            while pending:
+                current = pending.pop()
+                for target in forward_adjacency[current]:
+                    if target not in reachable:
+                        reachable.add(target)
+                        pending.append(target)
+            if self.recycling.source_node_id not in reachable:
+                raise ValueError("recycle edge must return to an upstream operation")
         return self
 
 
@@ -326,7 +397,10 @@ class MaintenanceAnalysisConfig(ContractModel):
     horizon_hours: float = Field(default=72, gt=0, le=8_760)
     ewma_alpha: float = Field(default=0.3, gt=0, le=1)
     robust_z_threshold: float = Field(default=3.5, gt=0, le=100)
+    cusum_drift: float = Field(default=0.5, ge=0, le=100)
+    cusum_threshold: float = Field(default=5.0, gt=0, le=1_000)
     minimum_baseline_points: int = Field(default=5, ge=3, le=10_000)
+    calibration_bins: int = Field(default=5, ge=2, le=20)
     confidence_level: float = Field(default=0.8, gt=0, lt=1)
     predictive_risk_threshold: float = Field(default=0.25, gt=0, le=1)
     criticality: float = Field(default=1, gt=0, le=10)
@@ -346,7 +420,7 @@ class AnomalyResult(ContractModel):
 
     machine_id: str = Field(min_length=1)
     assessed_at: datetime
-    method: Literal["ewma_robust"] = "ewma_robust"
+    method: Literal["ewma_robust", "cusum_robust"] = "ewma_robust"
     score: float = Field(ge=0)
     threshold: float = Field(gt=0)
     is_anomaly: bool
@@ -473,6 +547,74 @@ class MaintenanceAssessment(ContractModel):
             raise ValueError("policy comparison must contain each maintenance policy once")
         if len(policies) != len(set(policies)):
             raise ValueError("maintenance policies must be unique")
+        return self
+
+
+class TemporalPrediction(ContractModel):
+    """One leakage-free prediction evaluated against a future time window."""
+
+    machine_id: str = Field(min_length=1)
+    assessed_at: datetime
+    method: Literal["ewma_robust", "cusum_robust"]
+    anomaly_score: float = Field(ge=0)
+    anomaly_threshold: float = Field(gt=0)
+    is_alert: bool
+    failure_probability: float = Field(ge=0, le=1)
+    horizon_hours: float = Field(gt=0, le=8_760)
+    observed_failure: bool | None = None
+    is_censored: bool = False
+    next_failure_at: datetime | None = None
+    alert_lead_hours: float | None = Field(default=None, ge=0)
+    observations_used: int = Field(ge=1, le=10_000_000)
+
+    @model_validator(mode="after")
+    def validate_outcome(self) -> TemporalPrediction:
+        if self.is_censored != (self.observed_failure is None):
+            raise ValueError("censored predictions must have an unknown observed_failure")
+        if self.alert_lead_hours is not None and not (
+            self.is_alert and self.observed_failure is True
+        ):
+            raise ValueError("alert lead time requires a true alert before a failure")
+        return self
+
+
+class TemporalValidationMetrics(ContractModel):
+    """Temporal alert metrics computed without using future observations as features."""
+
+    method: Literal["ewma_robust", "cusum_robust"]
+    evaluated_points: int = Field(ge=0)
+    censored_points: int = Field(ge=0)
+    true_positive: int = Field(ge=0)
+    false_positive: int = Field(ge=0)
+    true_negative: int = Field(ge=0)
+    false_negative: int = Field(ge=0)
+    precision: float | None = Field(default=None, ge=0, le=1)
+    recall: float | None = Field(default=None, ge=0, le=1)
+    f1_score: float | None = Field(default=None, ge=0, le=1)
+    brier_score: float | None = Field(default=None, ge=0, le=1)
+    failure_events: int = Field(ge=0)
+    detected_failure_events: int = Field(ge=0)
+    missed_failure_events: int = Field(ge=0)
+    mean_alert_lead_hours: float | None = Field(default=None, ge=0)
+    median_alert_lead_hours: float | None = Field(default=None, ge=0)
+    limitations: list[str] = Field(default_factory=list, max_length=20)
+
+
+class ProbabilityCalibrationBin(ContractModel):
+    """Observed frequency for one predicted-probability interval."""
+
+    method: Literal["weibull_conditional"] = "weibull_conditional"
+    bin_index: int = Field(ge=0)
+    probability_lower: float = Field(ge=0, le=1)
+    probability_upper: float = Field(ge=0, le=1)
+    sample_count: int = Field(ge=1)
+    mean_predicted_probability: float = Field(ge=0, le=1)
+    observed_failure_rate: float = Field(ge=0, le=1)
+
+    @model_validator(mode="after")
+    def validate_bin(self) -> ProbabilityCalibrationBin:
+        if self.probability_upper <= self.probability_lower:
+            raise ValueError("calibration bin upper bound must exceed its lower bound")
         return self
 
 

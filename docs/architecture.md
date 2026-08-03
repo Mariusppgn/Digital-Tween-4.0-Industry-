@@ -37,8 +37,9 @@ flowchart LR
   Maint --> Advice[Risk, RUL, recommendations and policy costs]
 ```
 
-Process nodes persist material inputs, outputs and editor coordinates. Edges persist material,
-condition and probability. The SylvaPapers baseline is acyclic and contains no recycling route.
+Process nodes persist material inputs, outputs and editor coordinates. Forward edges persist
+material, condition and probability and remain acyclic. One separately typed, validated and bounded
+recycle edge closes the controlled quality loop from `quality-control` to `stock-preparation`.
 
 ## 5. Series, parallel and state behavior
 
@@ -62,9 +63,9 @@ degradation. Units and quality labels travel with each record.
 configs + orders
   -> Module A validation and simulation
   -> events.csv + jobs.csv + machine_states.csv + sensors.csv
-  -> failures.csv + maintenance.csv + queues.csv + work_in_progress.csv
+  -> failures.csv + maintenance.csv + recycling.csv + queues.csv + work_in_progress.csv
   -> Module B input validation
-  -> EWMA + conditional Weibull risk + RUL + economic policy comparison
+  -> EWMA/CUSUM + conditional Weibull risk + RUL + temporal/economic evaluation
   -> maintenance results, recommendations, figures and reproducibility summary
 ```
 
@@ -93,6 +94,7 @@ shared or production deployment.
 - Module A emits contract-valid operational and condition-monitoring bundles;
 - Module B rejects incomplete inputs and returns traceable machine-level results;
 - every machine type exposes positive Weibull shape and scale;
-- no rejected roll is counted as accepted production or recycled;
+- rejected units are accepted only after successful bounded recycling and final quality control;
+- unrecovered rejects and rejects reaching the two-loop limit are recorded as final losses;
 - equal validated inputs and seed reproduce equal synthetic results;
 - tests, Ruff, strict mypy and bilingual documentation parity pass.
