@@ -16,7 +16,7 @@ données persistés et versionnés.
 | Pannes Weibull selon l'âge de marche | Implémenté | âge, pannes et arrêts propres à chaque machine |
 | Dégradation et capteurs synthétiques | Implémenté | exports horodatés des capteurs et états |
 | Recyclage qualité contrôlé | Implémenté | rétroaction bornée du contrôle qualité vers la préparation de pâte et compteurs de conservation |
-| Campagne statistique longue | Implémenté | 30 × 1 000 rouleaux, distributions de 15 KPI et intervalles de confiance à 95 % |
+| Campagne statistique longue | Implémenté | 100 × 2 000 rouleaux, distributions de 21 KPI et IC95 bootstrap |
 | Analyse de maintenance interprétable | Implémenté | EWMA/CUSUM, seuils robustes, risque Weibull et RUL |
 | Recommandations de maintenance | Implémenté | alerte, justification et fenêtre par machine |
 | Comparaison économique des politiques | Baseline implémentée | coûts synthétiques corrective, préventive et prédictive |
@@ -57,6 +57,8 @@ cohérentes, pas de reproduire finement la physique des fibres, fluides ou trans
 | `queues.csv` | observations des files par étape |
 | `work_in_progress.csv` | observations horodatées des encours |
 | `recycling.csv` | chaque tentative de récupération, résultat, nombre de passages et motif de perte finale |
+| `failure_economic_impacts.csv` | exposition de revenu et manque à gagner par panne selon la topologie |
+| `revenue.csv` | CA horaire et cumulé, coûts, marge et revenu contrefactuel |
 | `kpis.json` | indicateurs agrégés de production, qualité, arrêt, coût et énergie |
 | `final_state.json` | état terminal des machines, files et production |
 | `summary.json` | graine, versions, durée, configuration et comptes |
@@ -75,13 +77,16 @@ pas la masse continue de fibres, l'humidité ni le rendement de pâte.
 
 ### 3.4 Statistiques longue durée
 
-`configs/campaigns/long_run.yaml` définit 30 réplications indépendantes, 1 000 jobs planifiés par
-réplication, des arrivées espacées de 45 minutes et une extension d'horizon de 90 jours. La campagne
-calcule les distributions de 15 KPI, les quantiles empiriques R-7 et un intervalle de confiance à
-95 % par approximation normale pour chaque moyenne. Elle exporte aussi les preuves par produit et
-réplication ainsi que par machine et réplication. La réplication 4, graine 1003, est conservée pour le
-Module B car elle contient deux pannes ; cette sélection délibérée d'un échantillon avec événements
-ne signifie pas qu'il est statistiquement représentatif.
+`configs/campaigns/long_run.yaml` définit 100 réplications indépendantes, 2 000 jobs planifiés par
+réplication, des arrivées espacées de 45 minutes et une extension d'horizon de 120 jours. La campagne
+calcule les distributions de 21 KPI, les quantiles empiriques R-7 et un intervalle de confiance à
+95 % par bootstrap non paramétrique avec graine fixe. Elle exporte aussi les preuves par produit et
+réplication ainsi que par machine et réplication, soit 200 000 rouleaux planifiés au total.
+
+Les coûts horaires machine et les prix de vente sont des hypothèses synthétiques explicites en EUR.
+Une panne en série porte toute l'exposition active. En dérivation, la part est pondérée par le revenu
+des produits touchés puis par la capacité nominale de la machine parmi les ressources parallèles.
+Aucune accélération de rattrapage n'est créditée.
 
 ## 4. Module B — maintenance prédictive
 
@@ -119,6 +124,11 @@ traçable vers des méthodes simples et vérifiables.
 Les modèles de Cox, forêts d'isolation, modèles espace-état et prédiction conforme restent des
 candidats. Ils ne font pas partie de la baseline et devront démontrer une valeur mesurable avant ajout.
 
+La baseline ML économique utilise un `ExtraTreesRegressor` pour la perte attendue non négative. Elle apprend sur les
+réplications antérieures et s'évalue sur les réplications ultérieures, sans utiliser la conséquence
+cible ni une réplication future comme variable d'entrée. Elle classe les interventions prédictives
+selon leur bénéfice net attendu et reste consultative.
+
 ### 4.4 Sorties
 
 | Artefact | Objectif |
@@ -135,6 +145,9 @@ candidats. Ils ne font pas partie de la baseline et devront démontrer une valeu
 | `maintenance_policy_costs.png` | coût attendu des politiques par machine |
 | `temporal_validation.png` | précision, rappel et F1 EWMA/CUSUM sur les fenêtres non censurées |
 | `probability_calibration.png` | risque Weibull prédit face à la fréquence de panne observée |
+| `machine_economic_priorities.csv` | classement ML par perte prédite et bénéfice net attendu |
+| `economic_model_metrics.json` | MAE, MAE pondérée, RMSE, R2 et estimation de politique sur holdout ordonné |
+| `economic_model_validation.png` | preuve holdout réel contre prédit au style ggplot |
 
 Les identifiants de sortie restent en anglais technique, même lorsque les rapports sont en français.
 

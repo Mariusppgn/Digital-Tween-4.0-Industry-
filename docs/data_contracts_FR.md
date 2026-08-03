@@ -49,13 +49,13 @@ paquet.
 
 | Artefact | Grain | Rôle de compatibilité |
 |---|---|---|
-| `campaign_runs.csv` | réplication | valeurs des 15 KPI, comptes, graine, horizon et durée d'exécution |
+| `campaign_runs.csv` | réplication | valeurs des 21 KPI, comptes, graine, horizon et durée d'exécution |
 | `kpi_statistics.csv` | KPI | n, moyenne, écart-type, quantiles et IC95 de la moyenne |
 | `module_d_product_statistics.csv` | produit × réplication | preuves portables de capacité, service, perte et recyclage |
 | `module_e_machine_statistics.csv` | machine × réplication | preuves portables d'utilisation, fiabilité, énergie, émissions et coût |
 | `column_dictionary.json` | table et colonne | type, unité, description et déclaration de compatibilité CSV plat |
 
-Ces CSV d'échange utilisent le schéma `1.0.0`, la version producteur `0.4.0`, UTF-8, une ligne
+Ces CSV d'échange utilisent le schéma `1.0.0`, la version producteur `0.5.0`, UTF-8, une ligne
 d'en-tête et des cellules scalaires. Chaque ligne porte `schema_version`, `producer_version`,
 `data_classification`, `provenance`, `campaign_id` et `scenario_id` ; les tables répliquées portent
 aussi `replication` et `seed`.

@@ -73,7 +73,7 @@ def test_fast_baseline_exports_kpis_and_three_figures(tmp_path: Path) -> None:
     kpis = calculate_kpis(result)
     paths = save_result(result, tmp_path)
 
-    assert len(kpis) == len(KPI_NAMES) == 15
+    assert len(kpis) == len(KPI_NAMES) == 21
     assert kpis["quantity_produced"] == 10
     assert kpis["energy_consumption"] > 0
     assert kpis["total_cost"] > 0
@@ -81,5 +81,6 @@ def test_fast_baseline_exports_kpis_and_three_figures(tmp_path: Path) -> None:
         "throughput_plot",
         "utilization_plot",
         "kpi_plot",
+        "revenue_plot",
     }
     assert all(path.stat().st_size > 100 for path in paths.values())

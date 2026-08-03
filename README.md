@@ -82,10 +82,15 @@ Its result bundle includes events, jobs, KPI and figures plus machine states, se
 events, maintenance interventions, queue history, work in progress and final system state. Synthetic
 sensors expose load, temperature, vibration, pressure, power, operating age and degradation.
 
-The statistical campaign command runs 30 independent seeded replications of 1,000 planned rolls,
-released every 45 minutes over an extended 90-day horizon. It exports all 15 KPI distributions,
-empirical quantiles and normal-approximation 95% confidence intervals, plus product- and
-machine-level tables designed for downstream repositories.
+The statistical campaign command runs 100 independent seeded replications of 2,000 planned rolls,
+released every 45 minutes over an extended 120-day horizon: 200,000 planned rolls in total. It
+exports all 21 KPI distributions, empirical quantiles and seeded bootstrap 95% confidence
+intervals, plus product- and machine-level tables designed for downstream repositories.
+
+The economic ledger recognizes accepted finished rolls at their configured synthetic sale price.
+It records hourly and cumulative revenue, operating cost, gross margin, and a counterfactual revenue
+without failures. Failure loss uses the revenue-weighted product route and the failed resource's
+fixed nominal capacity share; remaining parallel machines do not speed up to recover lost output.
 
 ## Module B — predictive maintenance
 
@@ -98,6 +103,8 @@ The first maintenance baseline deliberately favors fast, interpretable methods:
 - economic comparison of corrective, preventive and predictive policies;
 - leakage-free rolling-origin backtesting with right-censoring, temporal confusion metrics and
   descriptive probability calibration.
+- an Extra Trees expected-loss model trained on earlier replications and validated on later unseen
+  replications to rank cost-sensitive interventions by predicted lost revenue.
 
 These results are decision support only. They are evaluated against synthetic failures and synthetic
 cost assumptions; no claimed accuracy transfers to a real mill without calibration.
@@ -121,9 +128,10 @@ internals, so both modules can be extracted into separate packages later.
 | File | Intended consumer | Grain and use |
 |---|---|---|
 | `module_d_product_statistics.csv` | Module D | product × replication; capacity, service, delay, loss and recycling evidence |
-| `module_e_machine_statistics.csv` | Module E | machine × replication; utilization, failures, downtime, energy, emissions and cost |
-| `kpi_statistics.csv` | Modules D and E | 15 campaign KPI summaries with quantiles and 95% confidence intervals |
+| `module_e_machine_statistics.csv` | Module E | machine × replication; utilization, failures, hourly costs, revenue exposure and lost revenue |
+| `kpi_statistics.csv` | Modules D and E | 21 campaign KPI summaries with quantiles and bootstrap 95% confidence intervals |
 | `machine_decision_features.csv` | Modules D and E | Module B risk, RUL, policy, cost and capacity-impact features |
+| `machine_economic_priorities.csv` | Modules D and E | ML rank, predicted lost revenue and expected net benefit |
 | `handoff_manifest.json` | Modules D and E | file list, row counts, headers, consumers and SHA-256 checksums |
 
 Every campaign exchange row carries `schema_version`, `producer_version`, `provenance` and
@@ -136,11 +144,13 @@ Module D and Module E repositories.
 After generating the campaign and Module B analysis, create the compact handoff with:
 
 ```bash
-uv run sylvapapers prepare-exchange --campaign outputs/long-run-statistics --maintenance outputs/long-run-maintenance --output exports/sylvapapers-handoff-v1
+uv run sylvapapers economic-model --input outputs/long-run-statistics/module_e_machine_statistics.csv --output outputs/economic-model
+uv run sylvapapers prepare-exchange --campaign outputs/long-run-statistics --maintenance outputs/long-run-maintenance --economic-model outputs/economic-model --output exports/sylvapapers-handoff-v2
 ```
 
 The command rejects incompatible schema majors or data classifications and atomically copies only
-the public exchange files. `make exchange` runs the complete campaign → maintenance → handoff chain.
+the public exchange files. `make exchange` runs the complete campaign → maintenance → economic
+model → handoff chain.
 
 ## Visual factory editor
 

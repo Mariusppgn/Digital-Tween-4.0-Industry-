@@ -85,10 +85,15 @@ Son paquet de résultats inclut événements, jobs, KPI et figures, ainsi que le
 capteurs, pannes, interventions de maintenance, historique des files, encours et état final. Les
 capteurs synthétiques exposent charge, température, vibration, pression, puissance, âge et dégradation.
 
-La commande de campagne statistique exécute 30 réplications indépendantes avec graine de 1 000
-rouleaux planifiés, libérés toutes les 45 minutes sur un horizon étendu de 90 jours. Elle exporte les
-distributions des 15 KPI, les quantiles empiriques et des intervalles de confiance à 95 % par
-approximation normale, ainsi que des tables produit et machine destinées aux dépôts aval.
+La commande de campagne statistique exécute 100 réplications indépendantes avec graine de 2 000
+rouleaux planifiés, libérés toutes les 45 minutes sur un horizon étendu de 120 jours, soit 200 000
+rouleaux au total. Elle exporte les distributions des 21 KPI, les quantiles empiriques et des IC95
+bootstrap à graine fixe, ainsi que des tables produit et machine destinées aux dépôts aval.
+
+Le grand livre économique reconnaît les rouleaux finis acceptés à leur prix de vente synthétique
+configuré. Il calcule CA horaire et cumulé, coûts, marge et CA contrefactuel sans panne. Le manque à
+gagner utilise la route produit pondérée par le revenu et la capacité nominale fixe de la ressource ;
+les machines parallèles restantes n'accélèrent pas pour rattraper la production perdue.
 
 ## Module B — maintenance prédictive
 
@@ -101,6 +106,8 @@ La première baseline de maintenance privilégie volontairement des méthodes ra
 - comparaison économique des politiques corrective, préventive et prédictive ;
 - backtest à origine glissante sans fuite, avec censure à droite, confusion temporelle et
   étalonnage descriptif des probabilités.
+- modèle Extra Trees de perte attendue, appris sur les réplications antérieures et validé sur les
+  réplications ultérieures, pour classer les interventions selon le manque à gagner prédit.
 
 Ces résultats constituent uniquement une aide à la décision. Ils sont évalués sur des pannes et coûts
 synthétiques ; aucune précision annoncée ne se transfère à une papèterie réelle sans étalonnage.
@@ -124,9 +131,10 @@ les composants internes du simulateur : les deux modules pourront donc devenir d
 | Fichier | Consommateur prévu | Grain et usage |
 |---|---|---|
 | `module_d_product_statistics.csv` | Module D | produit × réplication ; capacité, service, retard, perte et recyclage |
-| `module_e_machine_statistics.csv` | Module E | machine × réplication ; utilisation, pannes, arrêt, énergie, émissions et coût |
-| `kpi_statistics.csv` | Modules D et E | résumé des 15 KPI avec quantiles et intervalles de confiance à 95 % |
+| `module_e_machine_statistics.csv` | Module E | machine × réplication ; utilisation, pannes, coûts horaires, exposition et manque à gagner |
+| `kpi_statistics.csv` | Modules D et E | résumé des 21 KPI avec quantiles et IC95 bootstrap |
 | `machine_decision_features.csv` | Modules D et E | risque, RUL, politique, coût et impact capacité du Module B |
+| `machine_economic_priorities.csv` | Modules D et E | rang ML, perte prédite et bénéfice net attendu |
 | `handoff_manifest.json` | Modules D et E | liste, lignes, en-têtes, consommateurs et sommes SHA-256 des fichiers |
 
 Chaque ligne d'échange de campagne porte `schema_version`, `producer_version`, `provenance` et
@@ -139,11 +147,13 @@ séparés des Modules D et E.
 Après la campagne et l'analyse du Module B, créer le paquet compact avec :
 
 ```bash
-uv run sylvapapers prepare-exchange --campaign outputs/long-run-statistics --maintenance outputs/long-run-maintenance --output exports/sylvapapers-handoff-v1
+uv run sylvapapers economic-model --input outputs/long-run-statistics/module_e_machine_statistics.csv --output outputs/economic-model
+uv run sylvapapers prepare-exchange --campaign outputs/long-run-statistics --maintenance outputs/long-run-maintenance --economic-model outputs/economic-model --output exports/sylvapapers-handoff-v2
 ```
 
 La commande rejette les versions majeures ou classifications incompatibles et copie atomiquement
-les seuls fichiers publics. `make exchange` exécute toute la chaîne campagne → maintenance → paquet.
+les seuls fichiers publics. `make exchange` exécute toute la chaîne campagne → maintenance → modèle
+économique → paquet.
 
 ## Éditeur visuel de l'usine
 

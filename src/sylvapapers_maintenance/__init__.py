@@ -1,6 +1,11 @@
 """Public predictive-maintenance API for SylvaPapers."""
 
 from .anomaly import cusum_robust_anomaly, ewma_robust_anomaly
+from .economic_model import (
+    EconomicModelResult,
+    save_lost_revenue_model,
+    train_lost_revenue_model,
+)
 from .economics import compare_maintenance_policies
 from .io import MaintenanceDataset, load_maintenance_config, load_module_a_outputs
 from .output import save_maintenance_analysis
@@ -17,6 +22,7 @@ from .service import (
 from .validation import TemporalValidationResult, backtest_temporal_alerts
 
 __all__ = [
+    "EconomicModelResult",
     "MaintenanceAnalysisResult",
     "MaintenanceDataset",
     "TemporalValidationResult",
@@ -31,5 +37,7 @@ __all__ = [
     "ewma_robust_anomaly",
     "load_maintenance_config",
     "load_module_a_outputs",
+    "save_lost_revenue_model",
     "save_maintenance_analysis",
+    "train_lost_revenue_model",
 ]

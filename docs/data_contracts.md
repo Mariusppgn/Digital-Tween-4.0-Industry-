@@ -49,13 +49,13 @@ result bundle.
 
 | Artefact | Grain | Compatibility role |
 |---|---|---|
-| `campaign_runs.csv` | replication | 15 KPI values, counts, seed, horizon and runtime |
+| `campaign_runs.csv` | replication | 21 KPI values, counts, seed, horizon and runtime |
 | `kpi_statistics.csv` | KPI | n, mean, standard deviation, quantiles and 95% mean CI |
 | `module_d_product_statistics.csv` | product × replication | portable capacity, service, loss and recycling evidence |
 | `module_e_machine_statistics.csv` | machine × replication | portable utilization, reliability, energy, emissions and cost evidence |
 | `column_dictionary.json` | table and column | data type, unit, description and flat-CSV compatibility declaration |
 
-These exchange CSVs use schema version `1.0.0`, producer version `0.4.0`, UTF-8, a header row and
+These exchange CSVs use schema version `1.0.0`, producer version `0.5.0`, UTF-8, a header row and
 scalar cells. Each row has `schema_version`, `producer_version`, `data_classification`, `provenance`,
 `campaign_id` and `scenario_id`; replicated tables also carry `replication` and `seed`.
 

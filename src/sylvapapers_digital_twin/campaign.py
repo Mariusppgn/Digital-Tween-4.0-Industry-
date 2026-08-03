@@ -8,6 +8,7 @@ import json
 import math
 import os
 import platform
+import random
 import sys
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -22,12 +23,14 @@ from .kpi import KPI_NAMES, calculate_kpis
 from .simulator import SimulationResult, simulate
 
 EXCHANGE_SCHEMA_VERSION = "1.0.0"
-PRODUCER_VERSION = "0.4.0"
+PRODUCER_VERSION = "0.5.0"
 DEFAULT_PLOT_KPIS = (
     "quantity_produced",
     "service_rate",
     "material_loss_rate",
     "total_cost",
+    "lost_revenue_due_to_failures",
+    "gross_operating_margin",
 )
 
 KPI_UNITS: dict[str, str] = {
@@ -42,10 +45,16 @@ KPI_UNITS: dict[str, str] = {
     "recycled_quantity": "roll_equivalent",
     "recycling_recovery_rate": "ratio",
     "downtime": "minute",
-    "total_cost": "synthetic_currency_unit",
+    "total_cost": "EUR",
     "energy_consumption": "kWh",
     "simplified_oee": "ratio",
     "average_delay": "minute",
+    "recognized_revenue": "EUR",
+    "lost_revenue_due_to_failures": "EUR",
+    "counterfactual_revenue_without_failures": "EUR",
+    "gross_operating_margin": "EUR",
+    "average_revenue_rate": "EUR/hour",
+    "revenue_loss_rate": "ratio",
 }
 
 RUN_COLUMNS = [
@@ -90,6 +99,10 @@ PRODUCT_COLUMNS = [
     "average_cycle_time_minutes",
     "average_delay_minutes",
     "throughput_rolls_per_hour",
+    "sale_price_per_roll",
+    "recognized_revenue",
+    "final_loss_revenue",
+    "currency",
 ]
 
 MACHINE_COLUMNS = [
@@ -112,6 +125,16 @@ MACHINE_COLUMNS = [
     "maintenance_count",
     "maintenance_minutes",
     "cost_synthetic_currency_unit",
+    "hourly_operating_cost",
+    "hourly_idle_cost",
+    "expected_repair_hours",
+    "weibull_shape",
+    "weibull_scale_hours",
+    "energy_cost",
+    "topology_loss_fraction",
+    "nominal_revenue_exposure_per_hour",
+    "lost_revenue_due_to_failures",
+    "currency",
 ]
 
 STATISTIC_COLUMNS = [
@@ -126,6 +149,8 @@ STATISTIC_COLUMNS = [
     "n",
     "mean",
     "standard_deviation",
+    "standard_error",
+    "relative_standard_error",
     "minimum",
     "p05",
     "p25",
@@ -283,12 +308,16 @@ def _aggregate(
     rows: list[dict[str, Any]], config: CampaignConfig, scenario_id: str
 ) -> list[dict[str, Any]]:
     statistics: list[dict[str, Any]] = []
-    for kpi_name in KPI_NAMES:
+    for kpi_index, kpi_name in enumerate(KPI_NAMES):
         values = [float(row[kpi_name]) for row in rows]
         count = len(values)
         mean = fmean(values)
         standard_deviation = stdev(values) if count > 1 else 0.0
-        margin = 1.96 * standard_deviation / math.sqrt(count) if count else 0.0
+        standard_error = standard_deviation / math.sqrt(count) if count else 0.0
+        bootstrap = random.Random(0xC0FFEE + kpi_index)
+        bootstrap_means = [
+            fmean(bootstrap.choice(values) for _ in range(count)) for _ in range(2_000)
+        ]
         statistics.append(
             {
                 "schema_version": EXCHANGE_SCHEMA_VERSION,
@@ -302,6 +331,8 @@ def _aggregate(
                 "n": count,
                 "mean": round(mean, 6),
                 "standard_deviation": round(standard_deviation, 6),
+                "standard_error": round(standard_error, 6),
+                "relative_standard_error": round(standard_error / abs(mean) if mean else 0.0, 9),
                 "minimum": round(min(values), 6),
                 "p05": round(_quantile(values, 0.05), 6),
                 "p25": round(_quantile(values, 0.25), 6),
@@ -309,9 +340,9 @@ def _aggregate(
                 "p75": round(_quantile(values, 0.75), 6),
                 "p95": round(_quantile(values, 0.95), 6),
                 "maximum": round(max(values), 6),
-                "ci95_lower": round(mean - margin, 6),
-                "ci95_upper": round(mean + margin, 6),
-                "ci95_method": "normal_approximation_1.96_standard_error",
+                "ci95_lower": round(_quantile(bootstrap_means, 0.025), 6),
+                "ci95_upper": round(_quantile(bootstrap_means, 0.975), 6),
+                "ci95_method": "seeded_percentile_bootstrap_2000_mean_resamples",
             }
         )
     return statistics
@@ -421,6 +452,21 @@ def _product_rows(
                     accepted / (float(result.makespan) / 60) if result.makespan else 0.0,
                     6,
                 ),
+                "sale_price_per_roll": round(
+                    max(float(job.get("sale_price_per_unit", 0)) for job in jobs), 6
+                ),
+                "recognized_revenue": round(
+                    sum(float(job.get("recognized_revenue", 0)) for job in jobs), 6
+                ),
+                "final_loss_revenue": round(
+                    sum(
+                        float(job.get("sale_price_per_unit", 0))
+                        for job in jobs
+                        if not bool(job.get("accepted", True))
+                    ),
+                    6,
+                ),
+                "currency": str(jobs[0].get("revenue_currency", "EUR")),
             }
         )
     return rows
@@ -450,6 +496,11 @@ def _machine_rows(
             event
             for event in result.maintenance_interventions
             if str(event.get("machine_id")) == machine_id
+        ]
+        impacts = [
+            impact
+            for impact in result.failure_economic_impacts
+            if str(impact.get("machine_id")) == machine_id
         ]
         operating_minutes = sum(float(event.get("duration", 0)) for event in events)
         rows.append(
@@ -488,6 +539,32 @@ def _machine_rows(
                 "cost_synthetic_currency_unit": round(
                     sum(float(event.get("cost", 0)) for event in events), 6
                 ),
+                "hourly_operating_cost": round(
+                    float(state.get("hourly_operating_cost", 0)),
+                    6,
+                ),
+                "hourly_idle_cost": round(
+                    float(state.get("hourly_idle_cost", 0)),
+                    6,
+                ),
+                "expected_repair_hours": round(float(state.get("expected_repair_hours", 0)), 6),
+                "weibull_shape": state.get("weibull_shape") or "",
+                "weibull_scale_hours": state.get("weibull_scale_hours") or "",
+                "energy_cost": round(
+                    sum(float(event.get("energy_cost", 0)) for event in events), 6
+                ),
+                "topology_loss_fraction": round(
+                    float(state.get("topology_loss_fraction", 0)),
+                    9,
+                ),
+                "nominal_revenue_exposure_per_hour": round(
+                    float(state.get("nominal_revenue_exposure_per_hour", 0)),
+                    6,
+                ),
+                "lost_revenue_due_to_failures": round(
+                    sum(float(impact.get("estimated_lost_revenue", 0)) for impact in impacts), 6
+                ),
+                "currency": str(impacts[0].get("currency", "EUR") if impacts else "EUR"),
             }
         )
     return rows
@@ -598,7 +675,7 @@ def run_campaign(
         },
         "methods": {
             "quantiles": "linear_interpolation_R7",
-            "ci95": "normal_approximation_1.96_standard_error_across_replications",
+            "ci95": "seeded_percentile_bootstrap_2000_mean_resamples",
         },
         "environment": {
             "python": sys.version.split()[0],
@@ -607,7 +684,7 @@ def run_campaign(
         "limitations": [
             "All values are synthetic engineering hypotheses and are not plant-calibrated.",
             "Replications vary the pseudo-random seed but share one factory and scenario.",
-            "The 95% confidence interval uses a normal approximation, not bootstrap inference.",
+            "The 95% confidence interval uses a seeded percentile bootstrap across replications.",
         ],
     }
     return CampaignResult(
@@ -667,6 +744,12 @@ def _column_dictionary() -> dict[str, Any]:
         "n": ("integer", "replication", "Number of replications."),
         "mean": ("number", "see unit", "Arithmetic mean."),
         "standard_deviation": ("number", "see unit", "Sample standard deviation."),
+        "standard_error": ("number", "see unit", "Standard error of the replication mean."),
+        "relative_standard_error": (
+            "number",
+            "ratio",
+            "Standard error divided by the absolute mean.",
+        ),
         "minimum": ("number", "see unit", "Observed minimum."),
         "p05": ("number", "see unit", "Fifth empirical percentile."),
         "p25": ("number", "see unit", "Twenty-fifth empirical percentile."),
@@ -700,6 +783,10 @@ def _column_dictionary() -> dict[str, Any]:
             "roll/hour",
             "Accepted product rolls divided by run makespan.",
         ),
+        "sale_price_per_roll": ("number", "EUR/roll", "Configured ex-works sale price."),
+        "recognized_revenue": ("number", "EUR", "Revenue from accepted finished rolls."),
+        "final_loss_revenue": ("number", "EUR", "Sale value of final quality losses."),
+        "currency": ("string", "none", "ISO 4217 currency code."),
     }
     machine_specific = {
         **exchange_identity,
@@ -719,9 +806,39 @@ def _column_dictionary() -> dict[str, Any]:
         "maintenance_minutes": ("number", "minute", "Maintenance duration."),
         "cost_synthetic_currency_unit": (
             "number",
-            "synthetic_currency_unit",
-            "Simulated operation cost, not an accounting amount.",
+            "EUR",
+            "Synthetic direct operation and energy cost, not an accounting amount.",
         ),
+        "hourly_operating_cost": (
+            "number",
+            "EUR/hour",
+            "Configured direct machine cost excluding electricity.",
+        ),
+        "hourly_idle_cost": (
+            "number",
+            "EUR/hour",
+            "Unavoidable machine cost during downtime.",
+        ),
+        "expected_repair_hours": ("number", "hour", "Configured mean repair duration."),
+        "weibull_shape": ("number", "none", "Two-parameter Weibull shape coefficient."),
+        "weibull_scale_hours": ("number", "hour", "Two-parameter Weibull scale."),
+        "energy_cost": ("number", "EUR", "Operation electricity cost."),
+        "topology_loss_fraction": (
+            "number",
+            "ratio",
+            "Revenue-weighted fixed-capacity loss if this machine is unavailable.",
+        ),
+        "nominal_revenue_exposure_per_hour": (
+            "number",
+            "EUR/hour",
+            "Commercial throughput exposed by this machine.",
+        ),
+        "lost_revenue_due_to_failures": (
+            "number",
+            "EUR",
+            "Estimated no-catch-up revenue loss during failures.",
+        ),
+        "currency": ("string", "none", "ISO 4217 currency code."),
     }
 
     def describe(
@@ -762,6 +879,8 @@ def generate_campaign_plot(result: CampaignResult, output_dir: str | Path) -> Pa
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+
+    plt.style.use("ggplot")
 
     plot_kpis = result.config.plot_kpis
     columns = min(2, len(plot_kpis))

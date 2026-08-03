@@ -22,6 +22,12 @@ KPI_NAMES = (
     "energy_consumption",
     "simplified_oee",
     "average_delay",
+    "recognized_revenue",
+    "lost_revenue_due_to_failures",
+    "counterfactual_revenue_without_failures",
+    "gross_operating_margin",
+    "average_revenue_rate",
+    "revenue_loss_rate",
 )
 
 
@@ -47,6 +53,14 @@ def calculate_kpis(result: SimulationResult) -> dict[str, float]:
         float(record.get("recovered_quantity", 0)) for record in result.recycling_records
     )
     final_material_loss = sum(float(job.get("final_material_loss", 0)) for job in jobs)
+    recognized_revenue = sum(float(job.get("recognized_revenue", 0)) for job in jobs)
+    lost_revenue = (
+        float(result.revenue_records[-1].get("cumulative_failure_lost_revenue", 0))
+        if result.revenue_records
+        else 0.0
+    )
+    counterfactual_revenue = recognized_revenue + lost_revenue
+    total_cost = sum(float(event.get("cost", 0)) for event in result.events)
     availability = max(0.0, 1 - downtime / available_minutes) if available_minutes else 0.0
     # Performance is deliberately simple for this first executable baseline.
     performance = min(1.0, utilization)
@@ -75,9 +89,17 @@ def calculate_kpis(result: SimulationResult) -> dict[str, float]:
             recycled_quantity / recycling_attempts if recycling_attempts else 0.0
         ),
         "downtime": downtime,
-        "total_cost": sum(float(event.get("cost", 0)) for event in result.events),
+        "total_cost": total_cost,
         "energy_consumption": sum(float(event.get("energy", 0)) for event in operations),
         "simplified_oee": availability * performance * (1 - defect_rate),
         "average_delay": fmean(float(job["delay"]) for job in jobs) if jobs else 0.0,
+        "recognized_revenue": recognized_revenue,
+        "lost_revenue_due_to_failures": lost_revenue,
+        "counterfactual_revenue_without_failures": counterfactual_revenue,
+        "gross_operating_margin": recognized_revenue - total_cost,
+        "average_revenue_rate": (recognized_revenue / (makespan / 60) if makespan else 0.0),
+        "revenue_loss_rate": (
+            lost_revenue / counterfactual_revenue if counterfactual_revenue else 0.0
+        ),
     }
     return {name: round(float(values[name]), 6) for name in KPI_NAMES}

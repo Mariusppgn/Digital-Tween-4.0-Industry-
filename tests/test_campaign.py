@@ -94,22 +94,22 @@ def test_campaign_csv_blocks_formula_injection(tmp_path: Path, prefix: str) -> N
 def test_reference_long_run_configuration_is_explicit() -> None:
     config = load_campaign_config(ROOT / "configs" / "campaigns" / "long_run.yaml")
 
-    assert config.replications == 30
-    assert config.order_quantity_multiplier == 100
-    assert config.horizon_extension_days == 90
+    assert config.replications == 100
+    assert config.order_quantity_multiplier == 200
+    assert config.horizon_extension_days == 120
     assert config.interarrival_time_minutes == 45
-    assert config.campaign_purpose == "baseline_capacity_operating_statistics"
+    assert config.campaign_purpose == "economic_reliability_and_lost_revenue_statistics"
     assert config.representative_replication == 4
     assert config.representative_selection_reason == (
         "failure_containing_sample_for_module_b_validation"
     )
-    assert len(config.seeds) == 30
-    assert len(set(config.seeds)) == 30
+    assert len(config.seeds) == 100
+    assert len(set(config.seeds)) == 100
 
     effective = materialize_scenario(scenario_config(), config)
-    assert effective["scenario_id"] == "sylvapapers-long-run-quarter-01"
+    assert effective["scenario_id"] == "sylvapapers-economic-long-run-01"
     assert effective["interarrival_time"] == 45
-    assert sum(order["quantity"] for order in effective["orders"]) == 300
+    assert sum(order["quantity"] for order in effective["orders"]) == 600
 
 
 def test_campaign_cli_accepts_an_arbitrary_output_directory(tmp_path: Path, capsys) -> None:

@@ -108,6 +108,10 @@ def save_result(
                 "downtime_minutes",
                 "failure_probability",
                 "operating_age_hours",
+                "topology_loss_fraction",
+                "nominal_revenue_exposure_per_hour",
+                "estimated_lost_revenue",
+                "currency",
                 "synthetic",
             ],
         ),
@@ -182,6 +186,49 @@ def save_result(
                 "synthetic",
             ],
         ),
+        "failure_economic_impacts.csv": (
+            result.failure_economic_impacts,
+            [
+                "failure_id",
+                "machine_id",
+                "process_node_id",
+                "time_minutes",
+                "occurred_at",
+                "downtime_minutes",
+                "downtime_hours",
+                "topology_loss_fraction",
+                "nominal_factory_revenue_per_hour",
+                "nominal_revenue_exposure_per_hour",
+                "estimated_lost_revenue",
+                "unavoidable_machine_cost",
+                "affected_product_ids",
+                "currency",
+                "method",
+                "assumptions_are_synthetic",
+            ],
+        ),
+        "revenue.csv": (
+            result.revenue_records,
+            [
+                "bucket_index",
+                "bucket_start_minutes",
+                "bucket_end_minutes",
+                "bucket_start",
+                "bucket_end",
+                "recognized_revenue",
+                "instantaneous_revenue_per_hour",
+                "cumulative_revenue",
+                "failure_lost_revenue",
+                "cumulative_failure_lost_revenue",
+                "counterfactual_cumulative_revenue",
+                "operating_cost",
+                "cumulative_operating_cost",
+                "cumulative_gross_margin",
+                "currency",
+                "data_classification",
+                "provenance",
+            ],
+        ),
     }
     for filename, (rows, fields) in detailed_tables.items():
         _csv(output / filename, rows, fields)
@@ -207,6 +254,8 @@ def save_result(
         "queue_record_count": len(result.queue_history),
         "wip_record_count": len(result.work_in_progress),
         "recycling_record_count": len(result.recycling_records),
+        "failure_economic_impact_count": len(result.failure_economic_impacts),
+        "revenue_observation_count": len(result.revenue_records),
         "machines": list(result.graph.nodes),
         "metadata": result.metadata,
         "environment": {
@@ -240,6 +289,8 @@ def generate_plots(
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+
+    plt.style.use("ggplot")
 
     paths: dict[str, Path] = {}
 
@@ -349,6 +400,43 @@ def generate_plots(
     paths["energy_by_machine"] = output / "energy_by_machine.png"
     figure.tight_layout()
     figure.savefig(paths["energy_by_machine"], dpi=140)
+    plt.close(figure)
+
+    figure, revenue_axis = plt.subplots(figsize=(10, 5))
+    time_hours = [float(row["bucket_end_minutes"]) / 60 for row in result.revenue_records]
+    revenue_axis.bar(
+        time_hours,
+        [float(row["instantaneous_revenue_per_hour"]) for row in result.revenue_records],
+        width=max(
+            0.05,
+            (result.metadata.get("economic_model", {}).get("revenue_bucket_minutes", 60) / 60)
+            * 0.8,
+        ),
+        alpha=0.45,
+        label="CA horaire",
+    )
+    revenue_axis.set(xlabel="Temps simulé (h)", ylabel="CA instantané (EUR/h)")
+    cumulative_axis = revenue_axis.twinx()
+    cumulative_axis.plot(
+        time_hours,
+        [float(row["cumulative_revenue"]) for row in result.revenue_records],
+        linewidth=2,
+        label="CA cumulé",
+    )
+    cumulative_axis.plot(
+        time_hours,
+        [float(row["counterfactual_cumulative_revenue"]) for row in result.revenue_records],
+        linewidth=2,
+        linestyle="--",
+        label="CA contrefactuel sans panne",
+    )
+    cumulative_axis.set_ylabel("CA cumulé (EUR)")
+    revenue_axis.set_title("Chiffre d’affaires et manque à gagner")
+    revenue_axis.legend(loc="upper left")
+    cumulative_axis.legend(loc="upper right")
+    paths["revenue_plot"] = output / "revenue.png"
+    figure.tight_layout()
+    figure.savefig(paths["revenue_plot"], dpi=140)
     plt.close(figure)
     return paths
 

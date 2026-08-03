@@ -210,7 +210,26 @@ class MachineConfig(ContractModel):
     availability: float = Field(default=1.0, gt=0, le=1)
     mtbf_hours: float | None = Field(default=None, gt=0)
     mttr_hours: float | None = Field(default=None, gt=0)
+    hourly_operating_cost: float = Field(default=0, ge=0)
+    hourly_idle_cost: float = Field(default=0, ge=0)
+    cost_currency: str = Field(default="EUR", min_length=3, max_length=3)
     metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def migrate_legacy_hourly_cost(self) -> MachineConfig:
+        """Promote legacy metadata costs into the typed economic contract."""
+
+        legacy_cost = self.metadata.get("cost_per_hour")
+        if self.hourly_operating_cost == 0 and legacy_cost is not None:
+            object.__setattr__(self, "hourly_operating_cost", float(legacy_cost))
+        legacy_idle = self.metadata.get("idle_cost_per_hour")
+        if self.hourly_idle_cost == 0:
+            object.__setattr__(
+                self,
+                "hourly_idle_cost",
+                float(legacy_idle) if legacy_idle is not None else self.hourly_operating_cost * 0.2,
+            )
+        return self
 
 
 class ResourceCalendar(ContractModel):
@@ -262,6 +281,8 @@ class ProductDefinition(ContractModel):
     routing: list[str] = Field(default_factory=list)
     cycle_time_minutes: dict[str, float] = Field(default_factory=dict)
     bill_of_materials: dict[str, float] = Field(default_factory=dict)
+    sale_price_per_unit: float = Field(default=0, ge=0)
+    sale_price_currency: str = Field(default="EUR", min_length=3, max_length=3)
     metadata: dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="after")
@@ -302,6 +323,21 @@ class DemandScenario(ContractModel):
     points: list[DemandPoint] = Field(min_length=1)
 
 
+class SimulationEconomicConfig(ContractModel):
+    """Economic assumptions used for operational revenue and loss accounting."""
+
+    currency: str = Field(default="EUR", min_length=3, max_length=3)
+    revenue_bucket_minutes: int = Field(default=60, ge=1, le=1_440)
+    electricity_price_per_kwh: float = Field(default=0.1837, ge=0)
+    industrial_labor_cost_per_hour: float = Field(default=47.7, ge=0)
+    revenue_recognition: Literal["accepted_finished_goods"] = "accepted_finished_goods"
+    downtime_loss_method: Literal["fixed_nominal_capacity_no_catch_up"] = (
+        "fixed_nominal_capacity_no_catch_up"
+    )
+    assumptions_are_synthetic: bool = True
+    benchmark_sources: list[str] = Field(default_factory=list)
+
+
 class SimulationScenario(ContractModel):
     scenario_id: str = Field(min_length=1)
     name: str = Field(min_length=1)
@@ -314,6 +350,7 @@ class SimulationScenario(ContractModel):
     random_seed: int = Field(default=42, ge=0)
     fidelity: Literal["fast", "standard", "research"] = "fast"
     interarrival_time: float = Field(default=0, ge=0)
+    economics: SimulationEconomicConfig = Field(default_factory=SimulationEconomicConfig)
 
     @model_validator(mode="after")
     def validate_scenario(self) -> SimulationScenario:
@@ -374,6 +411,59 @@ class FailureEvent(ContractModel):
     severity: int = Field(ge=1, le=5)
     downtime_minutes: float = Field(ge=0)
     sensor_context: list[SensorRecord] = Field(default_factory=list, max_length=1_000)
+
+
+class FailureEconomicImpact(ContractModel):
+    """Counterfactual commercial impact assigned to one simulated failure."""
+
+    failure_id: str = Field(min_length=1)
+    machine_id: str = Field(min_length=1)
+    process_node_id: str = Field(min_length=1)
+    occurred_at: datetime
+    downtime_hours: float = Field(ge=0)
+    topology_loss_fraction: float = Field(ge=0, le=1)
+    nominal_revenue_exposure_per_hour: float = Field(ge=0)
+    estimated_lost_revenue: float = Field(ge=0)
+    unavoidable_machine_cost: float = Field(ge=0)
+    affected_product_ids: list[str] = Field(default_factory=list)
+    currency: str = Field(default="EUR", min_length=3, max_length=3)
+    method: Literal["fixed_nominal_capacity_no_catch_up"] = "fixed_nominal_capacity_no_catch_up"
+    assumptions_are_synthetic: bool = True
+
+
+class RevenueObservation(ContractModel):
+    """One fixed-width operational revenue observation."""
+
+    bucket_start: datetime
+    bucket_end: datetime
+    recognized_revenue: float = Field(ge=0)
+    instantaneous_revenue_per_hour: float = Field(ge=0)
+    cumulative_revenue: float = Field(ge=0)
+    failure_lost_revenue: float = Field(ge=0)
+    cumulative_failure_lost_revenue: float = Field(ge=0)
+    counterfactual_cumulative_revenue: float = Field(ge=0)
+    operating_cost: float = Field(ge=0)
+    cumulative_operating_cost: float = Field(ge=0)
+    cumulative_gross_margin: float
+    currency: str = Field(default="EUR", min_length=3, max_length=3)
+
+
+class LostRevenueModelMetrics(ContractModel):
+    """Holdout metrics for the cost-sensitive lost-revenue regressor."""
+
+    model_type: str = Field(min_length=1)
+    training_rows: int = Field(ge=1)
+    validation_rows: int = Field(ge=1)
+    positive_training_rows: int = Field(ge=0)
+    positive_validation_rows: int = Field(ge=0)
+    mean_absolute_error: float = Field(ge=0)
+    weighted_mean_absolute_error: float = Field(ge=0)
+    root_mean_squared_error: float = Field(ge=0)
+    r2_score: float | None = None
+    baseline_lost_revenue: float = Field(ge=0)
+    policy_net_avoided_loss: float
+    currency: str = Field(default="EUR", min_length=3, max_length=3)
+    limitations: list[str] = Field(default_factory=list)
 
 
 class MaintenanceEconomicConfig(ContractModel):

@@ -17,6 +17,8 @@ from sylvapapers_contracts import SensorRecord
 
 from .service import MaintenanceAnalysisResult
 
+plt.style.use("ggplot")
+
 EXPORT_SCHEMA_VERSION = "1.0.0"
 
 

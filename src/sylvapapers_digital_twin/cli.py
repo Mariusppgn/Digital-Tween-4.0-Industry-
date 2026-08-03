@@ -101,7 +101,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     exchange.add_argument("--campaign", default="outputs/long-run-statistics")
     exchange.add_argument("--maintenance", default="outputs/long-run-maintenance")
-    exchange.add_argument("--output", default="exports/sylvapapers-handoff-v1")
+    exchange.add_argument("--economic-model", default="outputs/economic-model")
+    exchange.add_argument("--output", default="exports/sylvapapers-handoff-v2")
     report = commands.add_parser("report", help="Create a Markdown report from saved results")
     report.add_argument("--input", default="outputs/baseline")
     report.add_argument("--output")
@@ -116,6 +117,15 @@ def build_parser() -> argparse.ArgumentParser:
         default="configs/maintenance/baseline.yaml",
         help="Maintenance YAML/JSON configuration",
     )
+    economic_model = commands.add_parser(
+        "economic-model",
+        help="Train and validate the cost-sensitive lost-revenue maintenance model",
+    )
+    economic_model.add_argument(
+        "--input", default="outputs/long-run-statistics/module_e_machine_statistics.csv"
+    )
+    economic_model.add_argument("--output", default="outputs/economic-model")
+    economic_model.add_argument("--validation-fraction", type=float, default=0.2)
     editor = commands.add_parser("factory-editor", help="Serve the local visual factory editor")
     editor.add_argument("--factory", default="configs/factory.yaml")
     editor.add_argument("--host", default="127.0.0.1")
@@ -165,6 +175,28 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
         return 0
+    if args.command == "economic-model":
+        from sylvapapers_maintenance import (
+            save_lost_revenue_model,
+            train_lost_revenue_model,
+        )
+
+        model_result = train_lost_revenue_model(
+            args.input,
+            validation_fraction=args.validation_fraction,
+        )
+        paths = save_lost_revenue_model(model_result, args.output)
+        print(
+            json.dumps(
+                {
+                    "metrics": model_result.metrics,
+                    "files": {name: str(path) for name, path in paths.items()},
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
+        return 0
     if args.command == "campaign":
         from .campaign import load_campaign_config, run_campaign, save_campaign
 
@@ -199,7 +231,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "prepare-exchange":
         from .exchange import prepare_exchange_bundle
 
-        paths = prepare_exchange_bundle(args.campaign, args.maintenance, args.output)
+        paths = prepare_exchange_bundle(
+            args.campaign,
+            args.maintenance,
+            args.output,
+            economic_model_dir=args.economic_model,
+        )
         print(
             json.dumps(
                 {

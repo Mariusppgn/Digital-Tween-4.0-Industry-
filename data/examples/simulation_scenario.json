@@ -9,12 +9,29 @@
   "random_seed": 42,
   "fidelity": "fast",
   "interarrival_time": 1.5,
+  "economics": {
+    "currency": "EUR",
+    "revenue_bucket_minutes": 60,
+    "electricity_price_per_kwh": 0.1837,
+    "industrial_labor_cost_per_hour": 47.7,
+    "revenue_recognition": "accepted_finished_goods",
+    "downtime_loss_method": "fixed_nominal_capacity_no_catch_up",
+    "assumptions_are_synthetic": true,
+    "benchmark_sources": [
+      "https://ec.europa.eu/eurostat/en/web/products-eurostat-news/w/ddn-20260508-2",
+      "https://www.insee.fr/fr/statistiques/2381340",
+      "https://joint-research-centre.ec.europa.eu/reports-and-technical-documentation/best-available-techniques-bat-reference-document-production-pulp-paper-and-board-industrial_en",
+      "https://ec.europa.eu/eurostat/cache/metadata/en/prom_esms.htm"
+    ]
+  },
   "products": [
     {
       "product_id": "kraft-paper-roll",
       "name": "Rouleau de papier kraft",
       "enabled": true,
       "unit": "roll",
+      "sale_price_per_unit": 950.0,
+      "sale_price_currency": "EUR",
       "routing": [
         "debarking",
         "chipping",
@@ -66,6 +83,8 @@
       "name": "Rouleau de papier impression",
       "enabled": true,
       "unit": "roll",
+      "sale_price_per_unit": 990.0,
+      "sale_price_currency": "EUR",
       "routing": [
         "debarking",
         "chipping",
@@ -118,6 +137,8 @@
       "name": "Rouleau de papier pour carton ondulé",
       "enabled": false,
       "unit": "roll",
+      "sale_price_per_unit": 1020.0,
+      "sale_price_currency": "EUR",
       "routing": [
         "debarking",
         "chipping",

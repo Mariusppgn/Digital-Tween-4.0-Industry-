@@ -11,6 +11,7 @@ from typing import Any
 
 import networkx as nx
 
+from .economics import EconomicTopologyModel
 from .graph import build_process_graph, items, mapping, plain
 from .reliability import conditional_failure_probability
 
@@ -31,6 +32,7 @@ class MachineState:
     defect_rate: float = 0.0
     energy_kw: float = 0.0
     cost_per_hour: float = 0.0
+    idle_cost_per_hour: float = 0.0
     shared_resource: str | None = None
     shared_capacity: int = 1
     quality_control: bool = False
@@ -82,6 +84,8 @@ class SimulationResult:
     queue_history: list[dict[str, Any]] = field(default_factory=list)
     work_in_progress: list[dict[str, Any]] = field(default_factory=list)
     recycling_records: list[dict[str, Any]] = field(default_factory=list)
+    failure_economic_impacts: list[dict[str, Any]] = field(default_factory=list)
+    revenue_records: list[dict[str, Any]] = field(default_factory=list)
     final_state: dict[str, Any] = field(default_factory=dict)
 
     @property
@@ -131,10 +135,13 @@ class DigitalTwinSimulator:
         self.queue_history: list[dict[str, Any]] = []
         self.work_in_progress: list[dict[str, Any]] = []
         self.recycling_records: list[dict[str, Any]] = []
+        self.failure_economic_impacts: list[dict[str, Any]] = []
+        self.revenue_records: list[dict[str, Any]] = []
         self.current_wip = 0
         self.shared: dict[str, list[float]] = {}
         self.last_load: dict[str, float] = {}
         self.machines = self._machines()
+        self.economic_model = EconomicTopologyModel(self.factory, self.scenario, self.products)
         self.recycling = (
             mapping(self.graph.graph["recycling"])
             if self.graph.graph.get("recycling") is not None
@@ -228,7 +235,25 @@ class DigitalTwinSimulator:
                 ),
                 defect_rate=float(meta.get("defect_rate") or data.get("defect_rate") or 0),
                 energy_kw=float(meta.get("energy_kw") or data.get("energy_kw") or 0),
-                cost_per_hour=float(meta.get("cost_per_hour") or data.get("cost_per_hour") or 0),
+                cost_per_hour=float(
+                    data.get("hourly_operating_cost")
+                    or meta.get("cost_per_hour")
+                    or data.get("cost_per_hour")
+                    or 0
+                ),
+                idle_cost_per_hour=float(
+                    data.get("hourly_idle_cost")
+                    or meta.get("idle_cost_per_hour")
+                    or (
+                        float(
+                            data.get("hourly_operating_cost")
+                            or meta.get("cost_per_hour")
+                            or data.get("cost_per_hour")
+                            or 0
+                        )
+                        * 0.2
+                    )
+                ),
                 shared_resource=str(shared) if shared else None,
                 shared_capacity=int(meta.get("shared_resource_capacity") or 1),
                 quality_control=bool(
@@ -687,13 +712,25 @@ class DigitalTwinSimulator:
             failure_time = start
             age_before = state.operating_hours[machine_index]
             failure_id = f"FAIL-{len(self.failure_events) + 1:06d}"
+            economic_impact = self.economic_model.failure_impact(
+                failure_id=failure_id,
+                machine_id=state.instance_ids[machine_index],
+                process_node_id=state.machine_id,
+                time_minutes=failure_time,
+                downtime_minutes=state.repair_time,
+            )
+            self.failure_economic_impacts.append(economic_impact)
             self._log(
                 "breakdown",
                 start,
                 job,
                 state.machine_id,
                 state.repair_time,
-                cost=round(state.repair_time * state.cost_per_hour / 60, 6),
+                cost=round(state.repair_time * state.idle_cost_per_hour / 60, 6),
+                hourly_idle_cost=round(state.idle_cost_per_hour, 6),
+                topology_loss_fraction=economic_impact["topology_loss_fraction"],
+                estimated_lost_revenue=economic_impact["estimated_lost_revenue"],
+                revenue_currency=economic_impact["currency"],
                 failure_probability=round(failure_probability, 9),
                 operating_age_hours=round(state.operating_hours[machine_index], 6),
                 failure_family=("weibull" if state.failure_shape is not None else "legacy"),
@@ -723,6 +760,12 @@ class DigitalTwinSimulator:
                     "downtime_minutes": round(state.repair_time, 6),
                     "failure_probability": round(failure_probability, 9),
                     "operating_age_hours": round(age_before, 6),
+                    "topology_loss_fraction": economic_impact["topology_loss_fraction"],
+                    "nominal_revenue_exposure_per_hour": economic_impact[
+                        "nominal_revenue_exposure_per_hour"
+                    ],
+                    "estimated_lost_revenue": economic_impact["estimated_lost_revenue"],
+                    "currency": economic_impact["currency"],
                     "synthetic": True,
                 }
             )
@@ -771,6 +814,8 @@ class DigitalTwinSimulator:
         )
         self._machine_state(state, machine_index, start, "running", job, duration)
         energy = state.energy_kw * duration / 60 * (1 + 0.1 * load + (0.1 if degraded else 0))
+        machine_cost = state.cost_per_hour * duration / 60
+        energy_cost = energy * self.economic_model.electricity_price_per_kwh
         self._log(
             "operation_end",
             end,
@@ -783,7 +828,11 @@ class DigitalTwinSimulator:
                 energy * state.emission_factor_kg_co2e_per_kwh,
                 6,
             ),
-            cost=round(state.cost_per_hour * duration / 60, 6),
+            hourly_operating_cost=round(state.cost_per_hour, 6),
+            machine_cost=round(machine_cost, 6),
+            electricity_price_per_kwh=round(self.economic_model.electricity_price_per_kwh, 6),
+            energy_cost=round(energy_cost, 6),
+            cost=round(machine_cost + energy_cost, 6),
             degraded=degraded,
             machine_instance_id=state.instance_ids[machine_index],
         )
@@ -1004,6 +1053,13 @@ class DigitalTwinSimulator:
                     "recycle_loop_count": recycle_loop_count,
                     "quality_rejections": quality_rejections,
                     "material_balance_error": 0.0,
+                    "sale_price_per_unit": float(product.get("sale_price_per_unit") or 0),
+                    "revenue_currency": str(
+                        product.get("sale_price_currency") or self.economic_model.currency
+                    ),
+                    "recognized_revenue": (
+                        float(product.get("sale_price_per_unit") or 0) if not lost else 0.0
+                    ),
                 }
             )
         self.events.sort(key=lambda event: (event["time"], event["event_id"]))
@@ -1027,6 +1083,14 @@ class DigitalTwinSimulator:
         )
         self.recycling_records.sort(
             key=lambda row: (float(row["time_minutes"]), str(row["recycling_event_id"]))
+        )
+        self.failure_economic_impacts.sort(
+            key=lambda row: (float(row["time_minutes"]), str(row["failure_id"]))
+        )
+        self.revenue_records = self.economic_model.revenue_observations(
+            jobs,
+            self.events,
+            self.failure_economic_impacts,
         )
         materials: dict[str, float] = {}
         finished_goods: dict[str, int] = {}
@@ -1061,6 +1125,26 @@ class DigitalTwinSimulator:
                     "operating_age_hours": round(state.operating_hours[index], 6),
                     "completed_cycles": state.counts[index],
                     "available_at_minutes": round(state.available[index], 6),
+                    "hourly_operating_cost": round(state.cost_per_hour, 6),
+                    "hourly_idle_cost": round(state.idle_cost_per_hour, 6),
+                    "expected_repair_hours": round(state.repair_time / 60, 6),
+                    "weibull_shape": state.failure_shape,
+                    "weibull_scale_hours": state.failure_scale_hours,
+                    "topology_loss_fraction": round(
+                        self.economic_model.topology_loss_fraction(
+                            state.machine_id,
+                            instance_id,
+                        ),
+                        9,
+                    ),
+                    "nominal_revenue_exposure_per_hour": round(
+                        self.economic_model.nominal_revenue_per_hour
+                        * self.economic_model.topology_loss_fraction(
+                            state.machine_id,
+                            instance_id,
+                        ),
+                        6,
+                    ),
                 }
                 for state in self.machines.values()
                 for index, instance_id in enumerate(state.instance_ids[: state.capacity])
@@ -1110,6 +1194,24 @@ class DigitalTwinSimulator:
                     sum(float(event.get("cost", 0)) for event in self.events),
                     6,
                 ),
+                "recognized_revenue": round(
+                    sum(float(job.get("recognized_revenue", 0)) for job in jobs), 6
+                ),
+                "failure_lost_revenue": round(
+                    float(self.revenue_records[-1]["cumulative_failure_lost_revenue"])
+                    if self.revenue_records
+                    else 0.0,
+                    6,
+                ),
+                "counterfactual_revenue_without_failures": round(
+                    sum(float(job.get("recognized_revenue", 0)) for job in jobs)
+                    + (
+                        float(self.revenue_records[-1]["cumulative_failure_lost_revenue"])
+                        if self.revenue_records
+                        else 0.0
+                    ),
+                    6,
+                ),
             },
         }
         return SimulationResult(
@@ -1123,7 +1225,7 @@ class DigitalTwinSimulator:
                 "factory_id": self.factory.get("factory_id", "unknown"),
                 "scenario_id": self.scenario.get("scenario_id", "unknown"),
                 "schema_version": self.scenario.get("schema_version", "1.0.0"),
-                "code_version": "0.4.0",
+                "code_version": "0.5.0",
                 "time_unit": "minute",
                 "operating_age_unit": "hour",
                 "sensor_data_classification": "synthetic_hypothesis_not_calibrated",
@@ -1139,6 +1241,20 @@ class DigitalTwinSimulator:
                     "configured_recovery_yield": (self.recycling or {}).get("recovery_yield"),
                     "max_loops": (self.recycling or {}).get("max_loops"),
                     "atomic_yield_interpretation": "seeded_bernoulli_per_rejected_unit",
+                },
+                "economic_model": {
+                    "currency": self.economic_model.currency,
+                    "revenue_recognition": "accepted_finished_goods",
+                    "revenue_bucket_minutes": self.economic_model.bucket_minutes,
+                    "electricity_price_per_kwh": (self.economic_model.electricity_price_per_kwh),
+                    "nominal_revenue_per_hour": round(
+                        self.economic_model.nominal_revenue_per_hour, 6
+                    ),
+                    "downtime_loss_method": "fixed_nominal_capacity_no_catch_up",
+                    "topology_method": (
+                        "revenue_weighted_product_routes_times_fixed_machine_capacity_share"
+                    ),
+                    "assumptions_are_synthetic": True,
                 },
                 "model_limits": {
                     "resource_calendars": "declared_not_enforced",
@@ -1160,6 +1276,8 @@ class DigitalTwinSimulator:
             queue_history=self.queue_history,
             work_in_progress=self.work_in_progress,
             recycling_records=self.recycling_records,
+            failure_economic_impacts=self.failure_economic_impacts,
+            revenue_records=self.revenue_records,
             final_state=final_state,
         )
 

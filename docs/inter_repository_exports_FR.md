@@ -15,12 +15,14 @@ tables analytiques dérivées.
 
 | Fichier | Grain | Consommateur requis | Preuve décisionnelle principale |
 |---|---|---|---|
-| `campaign_runs.csv` | campagne × réplication | D et E | les 15 KPI, comptes, graine, horizon et durée d'exécution |
+| `campaign_runs.csv` | campagne × réplication | D et E | les 21 KPI, comptes, graine, horizon et durée d'exécution |
 | `kpi_statistics.csv` | campagne × KPI | D et E | moyenne, dispersion, quantiles empiriques et IC95 de la moyenne |
 | `module_d_product_statistics.csv` | campagne × réplication × produit | D | capacité de service, débit, retard, rejets, recyclage et perte finale |
 | `module_e_machine_statistics.csv` | campagne × réplication × machine | E | charge, pannes, arrêts, maintenance, énergie, émissions et coût synthétique |
 | `machine_decision_features.csv` | analyse × machine | D et E | risque de panne, RUL, politique, arrêt, coût et impact capacité |
 | `maintenance_policy_costs.csv` | analyse × machine × politique | E facultatif | alternatives économiques corrective, préventive et prédictive |
+| `machine_economic_priorities.csv` | modèle × machine | D et E | perte prédite, rang et bénéfice net attendu |
+| `economic_model_feature_importance.csv` | modèle × variable | E | importance par permutation sur holdout |
 
 Le paquet de campagne inclut aussi `campaign_metadata.json` et `column_dictionary.json`. Celui du
 Module B inclut `module_b_manifest.json`. Ces fichiers JSON adjacents sont des preuves de contrôle
@@ -34,7 +36,7 @@ consommateurs, sa taille, ses lignes et en-têtes CSV, ainsi que son empreinte S
 | Champ ou document | Règle |
 |---|---|
 | `schema_version` | version sémantique d'échange ; valeur actuelle `1.0.0` |
-| `producer_version` | version du générateur SylvaPapers ; valeur campagne actuelle `0.4.0` |
+| `producer_version` | version du générateur SylvaPapers ; valeur campagne actuelle `0.5.0` |
 | `data_classification` | la baseline actuelle est `synthetic_hypothesis_not_calibrated` |
 | `provenance` | identifie la simulation, le backtest temporel ou l'étape de variables décisionnelles |
 | `campaign_id`, `scenario_id` | identité stable d'expérience ; ne jamais la déduire des noms de fichier |
@@ -58,14 +60,14 @@ de simulation exact.
 | probabilités, taux et impact capacité | ratio dans `[0, 1]`, jamais points de pourcentage |
 | énergie | `kWh` |
 | émissions | `kgCO2e`, estimation synthétique issue des facteurs configurés |
-| coût de campagne | `synthetic_currency_unit`, pas un montant comptable |
+| coût machine, CA et manque à gagner | `EUR`, hypothèses synthétiques explicites et non données comptables |
 | coût de politique Module B | devise déclarée par ligne et dans `module_b_manifest.json` |
-| intervalle de confiance à 95 % | `moyenne ± 1,96 × écart_type_échantillon / sqrt(n)` entre réplications |
+| intervalle de confiance à 95 % | intervalle percentile bootstrap non paramétrique à graine fixe |
 
 `column_dictionary.json` fait foi pour les types, unités et descriptions des colonnes de campagne. Un
 intervalle de confiance à 95 % décrit l'incertitude de la moyenne des réplications simulées pour une
 usine et un scénario fixes ; ce n'est pas une garantie de performance industrielle. La campagne de
-référence contient 30 réplications de 1 000 jobs avec les graines 1000–1029.
+référence contient 100 réplications de 2 000 jobs avec les graines 1000–1099.
 
 ## 5. Politique de compatibilité
 
@@ -92,9 +94,10 @@ représentatif.
 ```powershell
 uv run sylvapapers campaign --config configs/campaigns/long_run.yaml --output outputs/long-run-statistics
 uv run sylvapapers maintenance --input outputs/long-run-statistics/representative_module_a --output outputs/long-run-maintenance --config configs/maintenance/baseline.yaml
-uv run sylvapapers prepare-exchange --campaign outputs/long-run-statistics --maintenance outputs/long-run-maintenance --output exports/sylvapapers-handoff-v1
+uv run sylvapapers economic-model --input outputs/long-run-statistics/module_e_machine_statistics.csv --output outputs/economic-model
+uv run sylvapapers prepare-exchange --campaign outputs/long-run-statistics --maintenance outputs/long-run-maintenance --economic-model outputs/economic-model --output exports/sylvapapers-handoff-v2
 
-$sylvaHandoff = Resolve-Path "exports/sylvapapers-handoff-v1"
+$sylvaHandoff = Resolve-Path "exports/sylvapapers-handoff-v2"
 $moduleDRepo = Resolve-Path "..\SylvaPapers-Module-D"
 $moduleERepo = Resolve-Path "..\SylvaPapers-Module-E"
 
@@ -129,7 +132,7 @@ politique de maintenance recommandée comme une intervention déjà exécutée.
 - Le recyclage est une récupération de Bernoulli par `roll_equivalent`, de rendement 0,75 et limitée
   à deux boucles ; ce n'est pas un bilan continu de fibres, humidité ou cassés.
 - La campagne ne change que les graines ; topologie d'usine et hypothèses de scénario sont communes.
-- L'intervalle de confiance à 95 % utilise une approximation normale sur 30 réplications synthétiques.
+- L'intervalle de confiance à 95 % utilise un bootstrap percentile à graine fixe sur 100 réplications synthétiques.
 - Les fenêtres temporelles du Module B se chevauchent ; les fenêtres censurées à droite sont exclues
   de la confusion et de l'étalonnage, et les métriques à peu d'événements restent descriptives.
 - Coûts, émissions, pannes, capteurs et paramètres économiques sont synthétiques et non étalonnés.

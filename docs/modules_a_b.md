@@ -15,13 +15,13 @@ keeps both modules independently executable through persisted, versioned data co
 | Operating-age Weibull failures | Implemented | machine-specific age, failures and downtime |
 | Synthetic degradation and sensors | Implemented | timestamped sensor and state exports |
 | Controlled quality recycling | Implemented | bounded QC-to-stock-preparation feedback and conservation counters |
-| Long statistical campaign | Implemented | 30 × 1,000 rolls, 15 KPI distributions and 95% confidence intervals |
+| Long statistical campaign | Implemented | 100 × 2,000 rolls, 21 KPI distributions and bootstrap 95% confidence intervals |
 | Interpretable maintenance analysis | Implemented | EWMA/CUSUM, robust thresholds, Weibull risk and RUL |
 | Maintenance recommendations | Implemented | machine-level alert, rationale and intervention window |
 | Economic policy comparison | Implemented baseline | corrective, preventive and predictive synthetic costs |
 | Leakage-free temporal validation | Implemented baseline | rolling origins, censoring, confusion and calibration exports |
 | Industrial calibration | Not implemented | approved mill histories are required |
-| Advanced survival or ML models | Planned only | must outperform the interpretable baseline |
+| Cost-sensitive lost-revenue ML | Implemented baseline | ordered holdout, Poisson gradient boosting and intervention ranking |
 | Closed-loop equipment control | Explicitly out of scope | advisory output and human review only |
 
 ## 3. Module A — digital twin
@@ -56,6 +56,8 @@ analysis, not to reproduce fine fibre, fluid or thermal physics.
 | `queues.csv` | queue observations by process step |
 | `work_in_progress.csv` | timestamped WIP observations |
 | `recycling.csv` | every recovery attempt, outcome, pass count and final-loss reason |
+| `failure_economic_impacts.csv` | topology-aware revenue exposure and lost revenue per failure |
+| `revenue.csv` | hourly recognized revenue, cumulative revenue, costs, margin and counterfactual |
 | `kpis.json` | aggregated production, quality, downtime, cost and energy indicators |
 | `final_state.json` | terminal machine, queue and production state |
 | `summary.json` | seed, versions, runtime, configuration and result counts |
@@ -73,12 +75,15 @@ internal recycled throughput, but it does not model continuous fibre mass, moist
 
 ### 3.4 Long-run statistics
 
-`configs/campaigns/long_run.yaml` defines 30 independent replications, 1,000 planned jobs per
-replication, 45-minute inter-arrivals and a 90-day horizon extension. The campaign computes 15 KPI
-distributions, R-7 empirical quantiles and a normal-approximation 95% confidence interval for each
-mean. It also exports product-by-replication and machine-by-replication evidence. Replication 4,
-seed 1003, is retained for Module B because it contains two failures; this deliberate event-bearing
-selection is not a claim that the sample is statistically representative.
+`configs/campaigns/long_run.yaml` defines 100 independent replications, 2,000 planned jobs per
+replication, 45-minute inter-arrivals and a 120-day horizon extension. The campaign computes 21 KPI
+distributions, R-7 empirical quantiles and a seeded non-parametric bootstrap 95% confidence interval
+for each mean. It also exports product-by-replication and machine-by-replication evidence.
+
+Hourly machine costs and product prices are explicit synthetic hypotheses in EUR. A failure on a
+common series step receives the full active revenue exposure. A failure on a product branch receives
+the revenue-weighted affected-product share; parallel machines further divide that share according
+to fixed nominal capacity. No catch-up speed is credited. Accepted finished rolls recognize revenue.
 
 ## 4. Module B — predictive maintenance
 
@@ -117,6 +122,11 @@ Advanced methods such as Cox models, isolation forests, state-space models and c
 prediction remain candidates. They are not part of the baseline and must demonstrate measurable
 value beyond these methods before adoption.
 
+The economic ML baseline uses an `ExtraTreesRegressor` for non-negative expected loss. It is trained on earlier
+replications and evaluated on later replications so no target consequence or future replication is
+used as an input feature. It predicts non-negative lost revenue and ranks proposed predictive
+interventions by expected net benefit. It remains advisory and synthetic.
+
 ### 4.4 Outputs
 
 | Artefact | Purpose |
@@ -133,6 +143,9 @@ value beyond these methods before adoption.
 | `maintenance_policy_costs.png` | expected policy cost by machine |
 | `temporal_validation.png` | EWMA/CUSUM precision, recall and F1 on uncensored windows |
 | `probability_calibration.png` | predicted Weibull risk against observed failure frequency |
+| `machine_economic_priorities.csv` | ML ranking by predicted failure loss and expected net benefit |
+| `economic_model_metrics.json` | ordered-holdout MAE, weighted MAE, RMSE, R2 and policy estimate |
+| `economic_model_validation.png` | ggplot-style actual-versus-predicted holdout evidence |
 
 Output identifiers remain technical English even when reports are presented in French.
 

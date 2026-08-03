@@ -35,6 +35,10 @@ EXCHANGE_FILES = (
     ExchangeFile("temporal_validation_metrics.csv", "maintenance", ("module_e",)),
     ExchangeFile("probability_calibration.csv", "maintenance", ("module_e",)),
     ExchangeFile("module_b_manifest.json", "maintenance", ("module_d", "module_e")),
+    ExchangeFile("machine_economic_priorities.csv", "economic", ("module_d", "module_e")),
+    ExchangeFile("economic_model_feature_importance.csv", "economic", ("module_e",)),
+    ExchangeFile("economic_model_metrics.json", "economic", ("module_d", "module_e")),
+    ExchangeFile("economic_model_manifest.json", "economic", ("module_d", "module_e")),
 )
 
 
@@ -94,19 +98,25 @@ def prepare_exchange_bundle(
     campaign_dir: str | Path,
     maintenance_dir: str | Path,
     output_dir: str | Path,
+    *,
+    economic_model_dir: str | Path | None = None,
 ) -> dict[str, Path]:
     """Validate and copy only the stable files needed by Modules D and E."""
 
     sources = {
         "campaign": Path(campaign_dir).resolve(),
         "maintenance": Path(maintenance_dir).resolve(),
+        "economic": Path(economic_model_dir).resolve() if economic_model_dir else Path(),
     }
     for label, directory in sources.items():
+        if label == "economic" and economic_model_dir is None:
+            raise ValueError("economic_model_dir is required for the v2 handoff")
         if not directory.is_dir():
             raise FileNotFoundError(f"{label} output directory not found: {directory}")
 
     campaign_metadata = _load_object(sources["campaign"] / "campaign_metadata.json")
     maintenance_manifest = _load_object(sources["maintenance"] / "module_b_manifest.json")
+    economic_manifest = _load_object(sources["economic"] / "economic_model_manifest.json")
     campaign_schema = str(campaign_metadata.get("schema_version", ""))
     maintenance_schema = str(maintenance_manifest.get("schema_version", ""))
     if _major(campaign_schema) != _major(maintenance_schema):
@@ -118,6 +128,8 @@ def prepare_exchange_bundle(
     maintenance_classification = str(maintenance_manifest.get("data_classification", ""))
     if not campaign_classification or campaign_classification != maintenance_classification:
         raise ValueError("Campaign and maintenance data classifications do not match")
+    if economic_manifest.get("data_classification") != campaign_classification:
+        raise ValueError("Campaign and economic-model data classifications do not match")
 
     destination = Path(output_dir).resolve()
     destination.mkdir(parents=True, exist_ok=True)
@@ -160,6 +172,7 @@ def prepare_exchange_bundle(
         "scenario_id": campaign_metadata.get("scenario_id"),
         "source_campaign_generated_at": campaign_metadata.get("generated_at"),
         "source_maintenance_generated_at": maintenance_manifest.get("generated_at"),
+        "source_economic_model_generated_at": economic_manifest.get("generated_at"),
         "consumers": ["module_d", "module_e"],
         "files": manifest_files,
         "validation": {

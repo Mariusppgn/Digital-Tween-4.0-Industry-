@@ -14,12 +14,14 @@ strict ingress validator, an immutable raw-data landing area and any derived ana
 
 | File | Grain | Required consumer | Main decision evidence |
 |---|---|---|---|
-| `campaign_runs.csv` | campaign × replication | D and E | all 15 KPI, counts, seed, horizon and runtime |
+| `campaign_runs.csv` | campaign × replication | D and E | all 21 KPI, counts, seed, horizon and runtime |
 | `kpi_statistics.csv` | campaign × KPI | D and E | mean, dispersion, empirical quantiles and 95% mean CI |
 | `module_d_product_statistics.csv` | campaign × replication × product | D | demand-servicing capacity, throughput, delay, rejects, recycling and final loss |
 | `module_e_machine_statistics.csv` | campaign × replication × machine | E | load, failures, downtime, maintenance, energy, emissions and synthetic cost |
 | `machine_decision_features.csv` | analysis × machine | D and E | failure risk, RUL, policy, downtime, cost and capacity impact |
 | `maintenance_policy_costs.csv` | analysis × machine × policy | optional E | corrective, preventive and predictive economic alternatives |
+| `machine_economic_priorities.csv` | model × machine | D and E | predicted lost revenue, rank and expected net benefit |
+| `economic_model_feature_importance.csv` | model × feature | E | holdout permutation importance |
 
 The campaign bundle also includes `campaign_metadata.json` and `column_dictionary.json`. The Module B
 bundle includes `module_b_manifest.json`. These adjacent JSON files are mandatory control evidence
@@ -33,7 +35,7 @@ byte size, CSV row count and header, plus its SHA-256 digest.
 | Field or document | Rule |
 |---|---|
 | `schema_version` | semantic exchange version; current value `1.0.0` |
-| `producer_version` | SylvaPapers generator version; current campaign value `0.4.0` |
+| `producer_version` | SylvaPapers generator version; current campaign value `0.5.0` |
 | `data_classification` | current baseline is `synthetic_hypothesis_not_calibrated` |
 | `provenance` | identifies the producing simulation, temporal backtest or decision-feature step |
 | `campaign_id`, `scenario_id` | stable experiment identity; never infer these from filenames |
@@ -56,14 +58,14 @@ analysis identity so a decision can be traced back to one exact simulation bundl
 | probabilities, rates and capacity impact | ratio in `[0, 1]`, never percentage points |
 | energy | `kWh` |
 | emissions | `kgCO2e`, synthetic estimate from configured factors |
-| campaign cost | `synthetic_currency_unit`, not an accounting amount |
+| machine cost, revenue and failure loss | `EUR`, explicit synthetic hypotheses rather than accounting observations |
 | Module B policy cost | currency declared per row and in `module_b_manifest.json` |
-| 95% confidence interval | `mean ± 1.96 × sample_standard_deviation / sqrt(n)` across replications |
+| 95% confidence interval | seeded non-parametric bootstrap percentile interval across replications |
 
 `column_dictionary.json` is authoritative for campaign column types, units and descriptions. A 95%
 confidence interval describes uncertainty of the simulated replication mean under one fixed factory
-and scenario; it is not a plant-performance guarantee. The reference campaign contains 30
-replications of 1,000 jobs with seeds 1000–1029.
+and scenario; it is not a plant-performance guarantee. The reference campaign contains 100
+replications of 2,000 jobs with seeds 1000–1099.
 
 ## 5. Compatibility policy
 
@@ -89,9 +91,10 @@ selected sample is useful for Module B validation but is not statistically repre
 ```powershell
 uv run sylvapapers campaign --config configs/campaigns/long_run.yaml --output outputs/long-run-statistics
 uv run sylvapapers maintenance --input outputs/long-run-statistics/representative_module_a --output outputs/long-run-maintenance --config configs/maintenance/baseline.yaml
-uv run sylvapapers prepare-exchange --campaign outputs/long-run-statistics --maintenance outputs/long-run-maintenance --output exports/sylvapapers-handoff-v1
+uv run sylvapapers economic-model --input outputs/long-run-statistics/module_e_machine_statistics.csv --output outputs/economic-model
+uv run sylvapapers prepare-exchange --campaign outputs/long-run-statistics --maintenance outputs/long-run-maintenance --economic-model outputs/economic-model --output exports/sylvapapers-handoff-v2
 
-$sylvaHandoff = Resolve-Path "exports/sylvapapers-handoff-v1"
+$sylvaHandoff = Resolve-Path "exports/sylvapapers-handoff-v2"
 $moduleDRepo = Resolve-Path "..\SylvaPapers-Module-D"
 $moduleERepo = Resolve-Path "..\SylvaPapers-Module-E"
 
@@ -125,7 +128,7 @@ policy as an already executed intervention.
 - Recycling is a Bernoulli recovery per `roll_equivalent`, with yield 0.75 and at most two loops; it
   is not a continuous fibre, moisture or broke balance.
 - The campaign changes seeds only; factory topology and scenario assumptions are shared by all runs.
-- The 95% confidence interval uses a normal approximation over 30 synthetic replications.
+- The 95% confidence interval uses a seeded percentile bootstrap over 100 synthetic replications.
 - Module B temporal windows overlap; right-censored windows are excluded from confusion and
   calibration, and small-event metrics remain descriptive.
 - Costs, emissions, failures, sensors and economic parameters are synthetic and uncalibrated.
